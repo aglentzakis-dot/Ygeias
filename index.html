@@ -19,6 +19,7 @@ html,body{margin:0}
 body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
 header{position:sticky;top:0;z-index:5;background:var(--head);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
 header h1{font-size:19px;margin:0}
+header button{white-space:nowrap;flex:none}
 header small{opacity:.85;font-size:13px}
 main{max-width:720px;margin:0 auto;padding:12px 14px}
 section.tab{display:none}section.tab.on{display:block}
@@ -82,12 +83,27 @@ legend{font-size:14px;color:var(--mut);padding:0 4px}
 .hcard table{font-size:1em}
 svg text{fill:var(--mut);font-size:10px}
 .bpv{font-weight:700}
+.q{display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;min-height:0;padding:0;border-radius:50%;border:1.5px solid var(--pri);color:var(--pri);background:transparent;font-size:13px;font-weight:700;cursor:pointer;vertical-align:middle;margin-left:6px;flex:none;line-height:1}
+.edf{cursor:pointer;border-radius:8px;padding:2px 4px;margin:0 -4px}
+.edf:active{background:var(--pri2)}
+.edf .pen{float:right;color:var(--pri);font-size:.85em}
+.ph{color:var(--mut);font-style:italic;font-size:.9em}
+.meter{position:relative;height:10px;border-radius:6px;background:linear-gradient(90deg,var(--blue) 0 15%,var(--green) 15% 55%,var(--yellow) 55% 70%,var(--orange) 70% 85%,var(--red) 85%);margin:8px 0 2px}
+.meter i{position:absolute;top:-4px;width:4px;height:18px;background:var(--tx);border-radius:2px;transform:translateX(-50%)}
+.kv{display:grid;grid-template-columns:1fr 1.15fr;gap:4px 12px;font-size:15px}
+.kv div:nth-child(odd){color:var(--mut)}
+.pchip{background:#ffffff22;color:#fff;border:1px solid #ffffff55;border-radius:999px;padding:2px 10px;min-height:26px;font-size:13px;margin-top:4px;max-width:60vw;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+#lock{position:fixed;inset:0;z-index:60;background:var(--bg);align-items:center;justify-content:center;padding:20px}
+.lockbox{width:min(340px,100%);text-align:center;display:flex;flex-direction:column;gap:10px}
+#lockpin{text-align:center;font-size:24px;letter-spacing:6px}
+.pthumb{width:40px;height:40px;border-radius:8px;object-fit:cover;flex:none;border:1px solid var(--line)}
 .aibox{background:var(--pri2);border-radius:12px;padding:10px;margin-bottom:12px}
 details summary{cursor:pointer}
 .list-day{margin-top:10px;font-weight:700;font-size:14px;color:var(--mut)}
 #print{display:none}
 @media print{
  body{background:#fff;color:#000;padding:0}
+ #print .noprint,#print .pen,#print .q{display:none!important}
  body.printing>*:not(#print){display:none!important}
  body.printing #print{display:block;padding:10mm;font-size:12pt}
  #print table{font-size:10.5pt}#print th,#print td{border-bottom:1px solid #999;color:#000}
@@ -95,7 +111,7 @@ details summary{cursor:pointer}
 </style>
 </head>
 <body>
-<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
+<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small><div><button id="pbtn" class="pchip" data-act="people">👤</button></div></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
 <div id="banner"></div>
 <main>
  <section class="tab on" id="t-sim"></section>
@@ -106,22 +122,29 @@ details summary{cursor:pointer}
 </main>
 <nav>
  <button data-tab="sim" class="on"><span>🏠</span>Σήμερα</button>
- <button data-tab="pie"><span>❤️</span>Πίεση</button>
+ <button data-tab="pie"><span>❤️</span>Μετρήσεις</button>
  <button data-tab="far"><span>💊</span>Φάρμακα</button>
  <button data-tab="kar"><span>🏥</span>Κάρτα</button>
  <button data-tab="per"><span>☰</span>Περισσότερα</button>
 </nav>
 <dialog id="dlg"></dialog>
+<dialog id="hdlg"></dialog>
 <div id="toast"></div>
 <div id="print"></div>
+<div id="lock" style="display:none"><div class="lockbox"><div style="font-size:52px">🔒</div><h2>Φάκελος Υγείας</h2><input id="lockpin" type="password" inputmode="numeric" autocomplete="off" placeholder="Κωδικός"><button class="pri wide" data-act="unlock">Ξεκλείδωμα</button><button class="wide" id="lockbio" data-act="unlockbio">👆 Δαχτυλικό / πρόσωπο</button><div id="lockmsg" style="color:var(--red);min-height:22px"></div><button class="small" data-act="lockforgot">Ξέχασα τον κωδικό</button></div></div>
+<input type="file" id="labIn" accept="image/*" style="display:none">
+<input type="file" id="rxIn" accept="image/*" style="display:none">
+<input type="file" id="pillIn" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="camIn" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
 
 <script>
 "use strict";
 /* ---------- Βασικά ---------- */
-const APP_VERSION='1.2.0';
-const KEY='fakelosYgeias', SUB='Fakelos-Ygeias';
+const APP_VERSION='1.4.0';
+const SUB='Fakelos-Ygeias', PKEY='fakelosYgeias_people';
+let PEOPLE=(()=>{try{const x=JSON.parse(localStorage.getItem(PKEY));if(x&&x.list&&x.list.length)return x}catch(e){}return{list:[{id:'p1',key:'fakelosYgeias'}],cur:'p1'}})();
+let KEY=(PEOPLE.list.find(p=>p.id===PEOPLE.cur)||PEOPLE.list[0]).key;
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
 const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
@@ -140,7 +163,7 @@ const ZONES=[{n:'Πρωί',a:5,b:12,l:'05–12'},{n:'Μεσημέρι',a:12,b:17
 const zoneOf=d=>{let h=d.getHours();if(h<5)h+=24;return ZONES.find(z=>h>=z.a&&h<z.b)};
 const SYMS=['ζάλη','πονοκέφαλος','κούραση','ταχυκαρδία','πόνος στο στήθος','θολή όραση','δύσπνοια'];
 
-function fix(d){d=d||{};d.profile=d.profile||{};d.bp=d.bp||[];d.meds=d.meds||[];d.doses=d.doses||{};d.appts=d.appts||[];d.settings=d.settings||{};d.notified=d.notified||{};if(d.settings.period==null)d.settings.period=30;if(d.settings.sound==null)d.settings.sound=true;return d}
+function fix(d){d=d||{};d.profile=d.profile||{};d.bp=d.bp||[];d.meds=d.meds||[];d.doses=d.doses||{};d.appts=d.appts||[];d.vitals=d.vitals||[];d.labs=d.labs||[];d.symptoms=d.symptoms||[];d.questions=d.questions||[];d.prev=d.prev||{};d.settings=d.settings||{};d.notified=d.notified||{};if(d.settings.period==null)d.settings.period=30;if(d.settings.sound==null)d.settings.sound=true;return d}
 function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x)return fix(x)}catch(e){}return fix({})}
 let D=load();
 function persist(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Αποτυχία αποθήκευσης στη συσκευή')}}
@@ -172,6 +195,7 @@ function scheduledOn(m,date){
  const k=dkey(date);
  if(m.start&&k<m.start)return false;
  if(m.until&&k>m.until)return false;
+ if(+m.interval>1){const s0=fromKey(m.start||k),d0=fromKey(k),diff=Math.round((d0-s0)/864e5);return diff>=0&&diff%(+m.interval)===0}
  if(m.days&&m.days.length&&m.days.length<7)return m.days.includes(date.getDay());
  return true;
 }
@@ -185,14 +209,15 @@ function adherence(m,days){
 }
 function daysLeft(m){
  if(m.stock===''||m.stock==null||m.prn)return null;
- const per=(+m.perDose||1)*((m.times||[]).length||1)*((m.days&&m.days.length&&m.days.length<7)?m.days.length/7:1);
+ const per=(+m.perDose||1)*((m.times||[]).length||1)*(+m.interval>1?1/(+m.interval):(m.days&&m.days.length&&m.days.length<7)?m.days.length/7:1);
  return per?Math.floor(+m.stock/per):null;
 }
 function medTitle(m){return esc(m.name)+(m.strength?' <span class="mut">'+esc(m.strength)+'</span>':'')}
 function freqText(m){
  if(m.prn)return 'όταν χρειάζεται';
  let s=(m.times||[]).join(', ');
- if(m.days&&m.days.length&&m.days.length<7)s+=' · '+m.days.map(d=>MERES_S[d]).join(' ');
+ if(+m.interval>1)s+=' · κάθε '+m.interval+' ημέρες';
+ else if(m.days&&m.days.length&&m.days.length<7)s+=' · '+m.days.map(d=>MERES_S[d]).join(' ');
  return s||'χωρίς ώρα';
 }
 function addHist(m,text){m.history=m.history||[];m.history.push({t:new Date().toISOString(),text})}
@@ -202,6 +227,7 @@ let TAB='sim';
 function showTab(t){TAB=t;document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();scrollTo(0,0)}
 function render(){
  const n=new Date();$('#hdate').textContent=MERES[n.getDay()]+', '+fmtD(n)+' · έκδ. '+APP_VERSION;
+ const pb=$('#pbtn');if(pb)pb.textContent='👤 '+(D.profile.name||'Άτομα')+(PEOPLE.list.length>1?' ▾':'');
  ({sim:rSim,pie:rPie,far:rFar,kar:rKar,per:rPer})[TAB]();
  checkBanner();
 }
@@ -216,7 +242,8 @@ function rSim(){
  const pend=list.filter(i=>!D.doses[doseKey(now,i.med,i.time)]);
  const next=pend.find(i=>{const [a,b]=i.time.split(':').map(Number);return a*60+b>=nm-30});
  const taken=list.filter(i=>(D.doses[doseKey(now,i.med,i.time)]||{}).s==='taken').length;
- h+=`<div class="card"><h2>Φάρμακα σήμερα</h2>`;
+ h+=simExtra();
+ h+=`<div class="card"><h2>Φάρμακα σήμερα ${hq('today')}</h2>`;
  if(!D.meds.filter(m=>m.active).length){h+=`<p class="mut">Δεν έχετε καταχωρίσει φάρμακα ακόμη.</p><button class="pri wide" data-act="addmed">+ Προσθήκη φαρμάκου</button></div>`}
  else{
   h+=`<div class="row sp"><div><div class="big">${taken}/${list.length}</div><div class="mut">λήψεις ολοκληρώθηκαν</div></div>`+
@@ -224,7 +251,7 @@ function rSim(){
   list.forEach(i=>{
    const m=i.med,k=doseKey(now,m,i.time),r=D.doses[k];const [a,b]=i.time.split(':').map(Number);
    const late=!r&&nm>a*60+b+30;
-   h+=`<div class="dose ${r?'done':''} ${late?'late':''}"><div class="t">${i.time}</div><div class="grow"><div><b>${medTitle(m)}</b></div>
+   h+=`<div class="dose ${r?'done':''} ${late?'late':''}"><div class="t">${i.time}</div>${m.photo?`<img class="pthumb" src="${m.photo}" alt="">`:''}<div class="grow"><div><b>${medTitle(m)}</b></div>
     <div class="mut">${esc(m.dose||'')}${m.food?' · '+FOOD[m.food]:''}</div>${m.purpose?`<div class="mut">Για: ${esc(m.purpose)}</div>`:''}
     ${r?`<div class="st" style="color:${r.s==='taken'?'var(--green)':'var(--mut)'}">${r.s==='taken'?'✓ Ελήφθη στις '+r.at:'Παραλείφθηκε'} <button class="small" data-act="undo" data-k="${k}">Αναίρεση</button></div>`
      :`${late?'<div class="st" style="color:var(--red)">Σε καθυστέρηση</div>':''}<div class="row" style="margin-top:6px"><button class="ok small" data-act="take" data-k="${k}">✓ Το πήρα</button><button class="small" data-act="skip" data-k="${k}">Παράλειψη</button></div>`}
@@ -234,13 +261,14 @@ function rSim(){
  }
  // Όταν χρειάζεται
  const prn=D.meds.filter(m=>m.active&&m.prn);
- if(prn.length){h+=`<div class="card"><h2>Όταν χρειάζεται</h2>`;
+ if(prn.length){h+=`<div class="card"><h2>Όταν χρειάζεται ${hq('prn')}</h2>`;
   prn.forEach(m=>{const tk=Object.keys(D.doses).filter(k=>k.startsWith(dkey(now)+'|'+m.id+'|prn'));
    h+=`<div class="dose"><div class="grow"><b>${medTitle(m)}</b><div class="mut">${esc(m.dose||'')}${m.purpose?' · για: '+esc(m.purpose):''}</div>${tk.length?`<div class="mut">Σήμερα: ${tk.map(k=>D.doses[k].at).join(', ')}</div>`:''}</div><button class="small ok" data-act="prn" data-id="${m.id}">Το πήρα τώρα</button></div>`});
   h+=`</div>`}
+ h+=quickCard();
  // Πίεση
  const last=D.bp.slice().sort((a,b)=>a.t<b.t?1:-1)[0];
- h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>`;
+ h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση ${hq('cats')}</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>`;
  if(last){const c=bpClass(last.sys,last.dia),d=new Date(last.t);
   const tday=D.bp.filter(r=>dkey(new Date(r.t))===dkey(now));
   h+=`<div class="row" style="margin-top:10px"><span class="pill" style="background:${c.c}"></span><span class="big">${last.sys}/${last.dia}</span>${last.pulse?`<span class="mut">♥ ${last.pulse}</span>`:''}</div>
@@ -250,7 +278,7 @@ function rSim(){
  h+=`</div>`;
  // Απόθεμα
  const low=D.meds.filter(m=>m.active&&daysLeft(m)!=null&&daysLeft(m)<=7);
- if(low.length)h+=`<div class="card warn"><h2>Τελειώνουν σύντομα</h2>${low.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.stock} τεμ., περίπου ${daysLeft(m)} ${daysLeft(m)===1?'ημέρα':'ημέρες'}</div>`).join('')}<div class="mut" style="margin-top:6px">Κλείστε συνταγή ή αγοράστε έγκαιρα.</div></div>`;
+ if(low.length)h+=`<div class="card warn"><h2>Τελειώνουν σύντομα ${hq('stock')}</h2>${low.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.stock} τεμ., περίπου ${daysLeft(m)} ${daysLeft(m)===1?'ημέρα':'ημέρες'}</div>`).join('')}<div class="mut" style="margin-top:6px">Κλείστε συνταγή ή αγοράστε έγκαιρα.</div></div>`;
  // Ραντεβού
  const up=D.appts.filter(a=>!a.done&&a.d>=dkey(now)&&a.d<=dkey(new Date(Date.now()+14*864e5))).sort((a,b)=>(a.d+a.h)<(b.d+b.h)?-1:1);
  if(up.length)h+=`<div class="card"><h2>Ερχόμενα ραντεβού</h2>${up.map(a=>`<div style="margin-bottom:6px">📅 <b>${fmtS(fromKey(a.d))}${a.h?' '+a.h:''}</b> — ${esc(a.title)}${a.place?' <span class="mut">('+esc(a.place)+')</span>':''}</div>`).join('')}</div>`;
@@ -258,29 +286,30 @@ function rSim(){
 }
 
 /* ---- Πίεση ---- */
-function rPie(){
+function rBp(){
  const list=bpInPeriod(),st=bpStats(list),P=+D.settings.period;
- let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση ${hq('measure')}</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>
  <div class="chips" style="margin-top:10px">${[[7,'7 ημέρες'],[30,'30 ημέρες'],[90,'3 μήνες'],[0,'Όλες']].map(([v,t])=>`<button class="chip ${P===v?'on':''}" data-act="period" data-v="${v}">${t}</button>`).join('')}</div></div>`;
+ h+=personalCard(st);
  if(!st){h+=`<div class="card"><p class="mut">Δεν υπάρχουν μετρήσεις σε αυτό το διάστημα.</p><p class="mut">Συμβουλή: μετράτε καθιστός, με την πλάτη ακουμπισμένη, μετά από 5 λεπτά ξεκούραση, χωρίς καφέ ή κάπνισμα 30 λεπτά πριν. Κάντε 2 μετρήσεις με 1 λεπτό διαφορά, πρωί και βράδυ.</p></div>`;$('#t-pie').innerHTML=h;return}
  const c=bpClass(st.sys,st.dia);
- h+=`<div class="card"><h2>Μέσος όρος</h2><div class="row"><span class="pill" style="background:${c.c}"></span><span class="big">${st.sys}/${st.dia}</span>${st.pulse?`<span class="mut">♥ ${st.pulse}</span>`:''}</div>
+ h+=`<div class="card"><h2>Μέσος όρος ${hq('avg')}</h2><div class="row"><span class="pill" style="background:${c.c}"></span><span class="big">${st.sys}/${st.dia}</span>${st.pulse?`<span class="mut">♥ ${st.pulse}</span>`:''}</div>
  <div class="mut">${c.t} · ${st.n} μετρήσεις</div>
  <div class="g2" style="margin-top:10px"><div><div class="mut">Μεγάλη</div><b>${st.minS} – ${st.maxS}</b></div><div><div class="mut">Μικρή</div><b>${st.minD} – ${st.maxD}</b></div></div>
  <div class="mut" style="margin-top:6px">Πάνω από 135/85: ${st.high} από ${st.n} (${Math.round(st.high/st.n*100)}%)</div></div>`;
  // Ανά ζώνη
- h+=`<div class="card"><h2>Ανά ώρα της ημέρας</h2><table><tr><th>Ζώνη</th><th>Μετρ.</th><th>Μ.Ο.</th><th>Σφυγμοί</th></tr>`;
+ h+=`<div class="card"><h2>Ανά ώρα της ημέρας ${hq('zones')}</h2><table><tr><th>Ζώνη</th><th>Μετρ.</th><th>Μ.Ο.</th><th>Σφυγμοί</th></tr>`;
  ZONES.forEach(z=>{const zl=list.filter(r=>zoneOf(new Date(r.t))===z),s=bpStats(zl);
   h+=`<tr><td><b>${z.n}</b><div class="mut">${z.l}</div></td><td>${zl.length}</td><td>${s?`<span class="pill" style="background:${bpClass(s.sys,s.dia).c}"></span><span class="bpv">${s.sys}/${s.dia}</span>`:'—'}</td><td>${s&&s.pulse?s.pulse:'—'}</td></tr>`});
  h+=`</table></div>`;
  // Ανά ημέρα εβδομάδας
- h+=`<div class="card"><h2>Ανά ημέρα της εβδομάδας</h2><table><tr><th>Ημέρα</th><th>Μετρ.</th><th>Μ.Ο.</th></tr>`;
+ h+=`<div class="card"><h2>Ανά ημέρα της εβδομάδας ${hq('weekday')}</h2><table><tr><th>Ημέρα</th><th>Μετρ.</th><th>Μ.Ο.</th></tr>`;
  [1,2,3,4,5,6,0].forEach(w=>{const wl=list.filter(r=>new Date(r.t).getDay()===w),s=bpStats(wl);
   h+=`<tr><td>${MERES[w]}</td><td>${wl.length}</td><td>${s?`<span class="pill" style="background:${bpClass(s.sys,s.dia).c}"></span>${s.sys}/${s.dia}`:'—'}</td></tr>`});
  h+=`</table></div>`;
- h+=`<div class="card"><h2>Γράφημα</h2>${bpChart(list)}<div class="mut"><span class="pill" style="background:var(--red)"></span>μεγάλη <span class="pill" style="background:var(--blue);margin-left:10px"></span>μικρή · διακεκομμένες: όριο 135/85</div></div>`;
+ h+=`<div class="card"><h2>Γράφημα ${hq('chart')}</h2>${bpChart(list)}<div class="mut"><span class="pill" style="background:var(--red)"></span>μεγάλη <span class="pill" style="background:var(--blue);margin-left:10px"></span>μικρή · διακεκομμένες: όριο 135/85</div></div>`;
  // Λίστα
- h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Μετρήσεις</h2><button class="small" data-act="printbp">🖨 Αναφορά για γιατρό</button></div>`;
+ h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Μετρήσεις ${hq('cats')}</h2><button class="small" data-act="printbp">🖨 Αναφορά για γιατρό</button></div>`;
  let cur='';
  list.forEach(r=>{const d=new Date(r.t),k=dkey(d);
   if(k!==cur){cur=k;const dl=list.filter(x=>dkey(new Date(x.t))===k),s=bpStats(dl);h+=`<div class="list-day">${MERES[d.getDay()]} ${fmtS(d)}${dl.length>1?` · Μ.Ο. ${s.sys}/${s.dia}`:''}</div>`}
@@ -309,8 +338,9 @@ function bpChart(list){
 /* ---- Φάρμακα ---- */
 function rFar(){
  const view=D.settings.medview||'active',act=D.meds.filter(m=>m.active),stp=D.meds.filter(m=>!m.active);
- let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Φάρμακα</h2><button class="pri" data-act="addmed">+ Προσθήκη</button></div>
- <div class="chips" style="margin-top:10px"><button class="chip ${view==='active'?'on':''}" data-act="medview" data-v="active">Ενεργά (${act.length})</button><button class="chip ${view==='stopped'?'on':''}" data-act="medview" data-v="stopped">Διακοπή (${stp.length})</button><button class="chip ${view==='hist'?'on':''}" data-act="medview" data-v="hist">Ιστορικό</button></div></div>`;
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Φάρμακα ${hq('meds')}</h2><button class="pri" data-act="addmed">+ Προσθήκη</button></div>
+ <div class="chips" style="margin-top:10px"><button class="chip ${view==='active'?'on':''}" data-act="medview" data-v="active">Ενεργά (${act.length})</button><button class="chip ${view==='stopped'?'on':''}" data-act="medview" data-v="stopped">Διακοπή (${stp.length})</button><button class="chip ${view==='hist'?'on':''}" data-act="medview" data-v="hist">Ιστορικό</button></div>
+ <div class="row" style="margin-top:10px"><button class="grow" data-act="rxphoto">📄 Φωτογραφία συνταγής</button> ${hq('rx')}</div></div>`+interCard();
  if(view==='hist'){
   const ev=[];D.meds.forEach(m=>(m.history||[]).forEach(e=>ev.push({m,e})));ev.sort((a,b)=>a.e.t<b.e.t?1:-1);
   h+=`<div class="card"><h2>Όλες οι αλλαγές</h2>${ev.length?ev.map(({m,e})=>`<div class="dose"><div class="t" style="font-size:13px;min-width:78px">${fmtS(new Date(e.t))}</div><div class="grow"><b>${esc(m.name)}</b><div class="mut">${esc(e.text)}</div></div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}</div>`;
@@ -320,17 +350,18 @@ function rFar(){
  if(!list.length)h+=`<div class="card"><p class="mut">${view==='active'?'Δεν υπάρχουν ενεργά φάρμακα.':'Δεν έχετε διακόψει κάποιο φάρμακο.'}</p></div>`;
  list.sort((a,b)=>a.name.localeCompare(b.name,'el')).forEach(m=>{
   const ad=m.active&&!m.prn?adherence(m,30):null,dl=m.active?daysLeft(m):null;
-  h+=`<div class="card"><div class="row sp"><div class="grow"><div style="font-size:18px"><b>${medTitle(m)}</b></div>${m.substance?`<div class="mut">Δραστική ουσία: ${esc(m.substance)}</div>`:''}</div>${m.form?`<span class="tag">${esc(m.form)}</span>`:''}</div>
+  h+=`<div class="card"><div class="row sp">${m.photo?`<img class="pthumb" style="width:52px;height:52px" src="${m.photo}" alt="">`:''}<div class="grow"><div style="font-size:18px"><b>${medTitle(m)}</b></div>${m.substance?`<div class="mut">Δραστική ουσία: ${esc(m.substance)}</div>`:''}</div>${m.form?`<span class="tag">${esc(m.form)}</span>`:''}</div>
   ${m.purpose?`<div style="margin-top:6px"><b>Τι κάνει / για τι:</b> ${esc(m.purpose)}</div>`:''}
   <div style="margin-top:6px">${m.dose?`<span class="tag">${esc(m.dose)}</span>`:''}${m.prn?'<span class="tag">όταν χρειάζεται</span>':(m.times||[]).map(t=>`<span class="tag">⏰ ${t}</span>`).join('')}${m.days&&m.days.length&&m.days.length<7?`<span class="tag">${m.days.map(d=>MERES_S[d]).join(' ')}</span>`:''}${m.food?`<span class="tag">${FOOD[m.food]}</span>`:''}</div>
   <div class="mut" style="margin-top:6px">${m.doctor?'Γιατρός: '+esc(m.doctor)+' · ':''}${m.start?'Από '+fmtS(fromKey(m.start)):''}${m.until?' έως '+fmtS(fromKey(m.until)):''}${!m.active&&m.end?' · Διακοπή '+fmtS(fromKey(m.end)):''}</div>
+  ${m.active&&m.rxEnd?`<div class="mut" style="${m.rxEnd<=dkey(new Date(Date.now()+10*864e5))?'color:var(--red);font-weight:600':''}">Η συνταγή λήγει: ${fmtS(fromKey(m.rxEnd))} ${hq('rxend')}</div>`:''}
   ${!m.active&&m.endReason?`<div class="mut">Λόγος διακοπής: ${esc(m.endReason)}</div>`:''}
   ${m.sideEffects?`<details style="margin-top:6px"><summary><b>Παρενέργειες</b></summary><div class="mut">${esc(m.sideEffects)}</div></details>`:''}
   ${m.warnings?`<details style="margin-top:4px"><summary><b>Προσοχή / αλληλεπιδράσεις</b></summary><div class="mut">${esc(m.warnings)}</div></details>`:''}
   ${m.ai?`<div class="mut" style="font-size:12px;margin-top:4px">🤖 Πληροφορίες από τεχνητή νοημοσύνη — επιβεβαιώστε με το φύλλο οδηγιών ή τον φαρμακοποιό.</div>`:''}
   ${m.notes?`<div class="mut">Σημειώσεις: ${esc(m.notes)}</div>`:''}
-  ${dl!=null?`<div class="mut" style="${dl<=7?'color:var(--red);font-weight:600':''}">Απόθεμα: ${m.stock} τεμ. (≈ ${dl} ημέρες)</div>`:''}
-  ${ad!=null?`<div class="mut">Τήρηση 30 ημερών: <b>${ad}%</b></div>`:''}
+  ${dl!=null?`<div class="mut" style="${dl<=7?'color:var(--red);font-weight:600':''}">Απόθεμα: ${m.stock} τεμ. (≈ ${dl} ημέρες) ${hq('stock')}</div>`:''}
+  ${ad!=null?`<div class="mut">Τήρηση 30 ημερών: <b>${ad}%</b> ${hq('adherence')}</div>`:''}
   <div class="row" style="margin-top:10px"><button class="small" data-act="editmed" data-id="${m.id}">✎ Επεξεργασία</button>${m.active?`<button class="small danger" data-act="stopmed" data-id="${m.id}">Διακοπή</button>`:`<button class="small" data-act="restartmed" data-id="${m.id}">Επανέναρξη</button>`}<button class="small" data-act="histmed" data-id="${m.id}">Ιστορικό</button></div></div>`});
  $('#t-far').innerHTML=h;
 }
@@ -340,20 +371,19 @@ function lastBpInfo(){const l=D.bp.slice().sort((a,b)=>a.t<b.t?1:-1);if(!l.lengt
 function recentStopped(){const lim=dkey(new Date(Date.now()-90*864e5));return D.meds.filter(m=>!m.active&&m.end&&m.end>=lim)}
 function rKar(){
  const p=D.profile,act=D.meds.filter(m=>m.active).sort((a,b)=>a.name.localeCompare(b.name,'el')),bi=lastBpInfo(),rs=recentStopped();
- let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Κάρτα για γιατρό / νοσοκομείο</h2></div><div class="row" style="margin-top:10px"><button class="small" data-act="bigtext">🔍 Μεγάλα γράμματα</button><button class="small" data-act="sharecard">📤 Αποστολή</button><button class="small" data-act="copycard">📋 Αντιγραφή</button><button class="small" data-act="printcard">🖨 Εκτύπωση</button></div></div>`;
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Κάρτα για γιατρό / νοσοκομείο ${hq('card')}</h2></div><div class="mut" style="margin-top:4px">Πατήστε πάνω σε οποιοδήποτε πεδίο για να το συμπληρώσετε.</div><div class="row" style="margin-top:10px"><button class="small" data-act="bigtext">🔍 Μεγάλα γράμματα</button><button class="small" data-act="sharecard">📤 Αποστολή</button><button class="small" data-act="copycard">📋 Αντιγραφή</button><button class="small" data-act="printcard">🖨 Εκτύπωση</button><button class="small" data-act="report">📑 Πλήρης αναφορά</button></div></div>`+emergCard();
  h+=`<div class="card hcard ${D.settings.bigtext?'bigtxt':''}">`;
  if(!p.name)h+=`<p class="mut">Συμπληρώστε τα στοιχεία σας για να είναι πλήρης η κάρτα.</p>`;
- h+=`<div style="font-size:1.25em;font-weight:700">${esc(p.name||'—')}</div>
- <div class="mut">${p.birth?'Γέννηση: '+fmtS(fromKey(p.birth)):''}${p.amka?' · ΑΜΚΑ: '+esc(p.amka):''}${p.blood?' · Ομάδα αίματος: <b>'+esc(p.blood)+'</b>':''}</div>
- <div class="lbl">ΑΛΛΕΡΓΙΕΣ</div><div class="al">${esc(p.allergies||'Καμία γνωστή')}</div>
- ${p.conditions?`<div class="lbl">ΠΑΘΗΣΕΙΣ / ΙΣΤΟΡΙΚΟ</div><div>${esc(p.conditions)}</div>`:''}
- <div class="lbl">ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ (${act.length})</div>`;
+ h+=`<div class="edf" data-act="profile"><span class="pen">✎</span><div style="font-size:1.25em;font-weight:700">${esc(p.name||'—')}</div>
+ <div class="mut">${p.birth?'Γέννηση: '+fmtS(fromKey(p.birth))+' ('+ageOf()+' ετών)':''}${p.amka?' · ΑΜΚΑ: '+esc(p.amka):''}${p.blood?' · Ομάδα αίματος: <b>'+esc(p.blood)+'</b>':''}${!p.birth&&!p.amka&&!p.blood?'<span class="ph noprint">πατήστε για ηλικία, ΑΜΚΑ, ομάδα αίματος</span>':''}</div>
+ ${p.height||p.weight?`<div class="mut">${p.height?'Ύψος '+p.height+' εκ.':''}${p.weight?' · Βάρος '+p.weight+' κιλά':''}</div>`:''}</div>
+ <div class="lbl">ΑΛΛΕΡΓΙΕΣ ${hq('allergies')}</div><div class="edf" data-act="editf" data-f="allergies"><span class="pen">✎</span><div class="al">${p.allergies?esc(p.allergies):(p.noAllergy?'Καμία γνωστή':'<span class="ph">Δεν έχει δηλωθεί — πατήστε για συμπλήρωση</span>')}</div></div>
+ ${edSec('conditions','ΠΑΘΗΣΕΙΣ / ΙΣΤΟΡΙΚΟ')}
+ <div class="lbl">ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ (${act.length}) ${hq('cardmeds')}</div>`;
  h+=act.length?`<table><tr><th>Φάρμακο</th><th>Δόση</th><th>Πότε</th></tr>${act.map(m=>`<tr><td><b>${esc(m.name)}</b> ${esc(m.strength||'')}${m.purpose?`<div class="mut">${esc(m.purpose)}</div>`:''}</td><td>${esc(m.dose||'')}</td><td>${esc(freqText(m))}${m.food?`<div class="mut">${FOOD[m.food]}</div>`:''}</td></tr>`).join('')}</table>`:'<div>Κανένα</div>';
  if(rs.length)h+=`<div class="lbl">ΔΙΑΚΟΠΗ ΤΟΥΣ ΤΕΛΕΥΤΑΙΟΥΣ 3 ΜΗΝΕΣ</div>${rs.map(m=>`<div>${esc(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+esc(m.endReason)+')':''}</div>`).join('')}`;
  if(bi)h+=`<div class="lbl">ΠΙΕΣΗ</div><div>Τελευταία: <b>${bi.last.sys}/${bi.last.dia}</b>${bi.last.pulse?' ♥ '+bi.last.pulse:''} (${fmtS(new Date(bi.last.t))} ${hm(new Date(bi.last.t))})${bi.w?` · Μ.Ο. 7 ημερών: <b>${bi.w.sys}/${bi.w.dia}</b>`:''}</div>`;
- if(p.contact)h+=`<div class="lbl">ΕΠΑΦΗ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ</div><div>${esc(p.contact)}</div>`;
- if(p.doctor)h+=`<div class="lbl">ΘΕΡΑΠΩΝ ΓΙΑΤΡΟΣ</div><div>${esc(p.doctor)}</div>`;
- if(p.other)h+=`<div class="lbl">ΑΛΛΑ</div><div>${esc(p.other)}</div>`;
+ h+=edSec('contact','ΕΠΑΦΗ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ')+edSec('doctor','ΘΕΡΑΠΩΝ ΓΙΑΤΡΟΣ')+edSec('other','ΑΛΛΑ (βηματοδότης, εμφυτεύματα…)');
  h+=`<div class="mut" style="margin-top:10px">Ενημέρωση: ${fmtS(new Date())}</div></div><button class="wide" data-act="profile">✎ Επεξεργασία στοιχείων</button>`;
  $('#t-kar').innerHTML=h;
 }
@@ -361,7 +391,7 @@ function cardText(){
  const p=D.profile,act=D.meds.filter(m=>m.active).sort((a,b)=>a.name.localeCompare(b.name,'el')),bi=lastBpInfo(),rs=recentStopped(),L=[];
  L.push('ΚΑΡΤΑ ΥΓΕΙΑΣ — '+(p.name||''));
  if(p.birth)L.push('Γέννηση: '+fmtS(fromKey(p.birth)));if(p.amka)L.push('ΑΜΚΑ: '+p.amka);if(p.blood)L.push('Ομάδα αίματος: '+p.blood);
- L.push('ΑΛΛΕΡΓΙΕΣ: '+(p.allergies||'Καμία γνωστή'));if(p.conditions)L.push('Παθήσεις: '+p.conditions);
+ L.push('ΑΛΛΕΡΓΙΕΣ: '+(p.allergies||(p.noAllergy?'Καμία γνωστή':'δεν έχει δηλωθεί')));if(p.birth)L.push('Ηλικία: '+ageOf());if(p.weight)L.push('Βάρος: '+p.weight+' κιλά');if(p.conditions)L.push('Παθήσεις: '+p.conditions);
  L.push('','ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ ('+fmtS(new Date())+'):');
  act.forEach((m,i)=>L.push((i+1)+'. '+m.name+(m.strength?' '+m.strength:'')+(m.dose?' — '+m.dose:'')+' — '+freqText(m)+(m.food?' ('+FOOD[m.food]+')':'')+(m.purpose?' — για: '+m.purpose:'')));
  if(!act.length)L.push('Κανένα');
@@ -378,22 +408,25 @@ function rPer(){
  const ap=D.appts.slice().sort((a,b)=>(a.d+(a.h||''))<(b.d+(b.h||''))?-1:1),today=dkey(new Date());
  const fut=ap.filter(a=>a.d>=today&&!a.done),past=ap.filter(a=>a.d<today||a.done).reverse();
  const apRow=a=>`<div class="dose ${a.done?'done':''}"><div class="t" style="font-size:14px;min-width:84px">${fmtS(fromKey(a.d))}<div class="mut" style="font-weight:400">${a.h||''}</div></div><div class="grow"><b>${esc(a.title)}</b>${a.place?`<div class="mut">${esc(a.place)}</div>`:''}${a.note?`<div class="mut">${esc(a.note)}</div>`:''}</div><button class="small" data-act="editappt" data-id="${a.id}">✎</button></div>`;
- let h=`<div class="card"><h2>Προσωπικά στοιχεία</h2><div class="mut">Όνομα, αλλεργίες, παθήσεις, ομάδα αίματος, επαφή έκτακτης ανάγκης.</div><button class="wide" style="margin-top:8px" data-act="profile">✎ Επεξεργασία</button></div>
- <div class="card"><div class="row sp"><h2 style="margin:0">Ραντεβού & εξετάσεις</h2><button class="pri small" data-act="addappt">+ Νέο</button></div>
+ let h=`<div class="card"><h2>Προσωπικά στοιχεία ${hq('body')}</h2><div class="mut">Όνομα, ηλικία, ύψος, βάρος, αλλεργίες, παθήσεις, ομάδα αίματος, επαφή έκτακτης ανάγκης.</div><div class="row" style="margin-top:8px"><button class="grow" data-act="profile">✎ Επεξεργασία</button><button class="grow" data-act="people">👥 Άτομα (${PEOPLE.list.length})</button></div></div>
+ ${symCard()}${qCard()}
+ <div class="card"><div class="row sp"><div class="grow"><b>📑 Πλήρης αναφορά για γιατρό</b> ${hq('report')}</div><button class="pri small" data-act="report">Δημιουργία</button></div></div>
+ <div class="card"><div class="row sp"><h2 style="margin:0">Ραντεβού & εξετάσεις ${hq('appts')}</h2><button class="pri small" data-act="addappt">+ Νέο</button></div>
  ${fut.length?fut.map(apRow).join(''):'<p class="mut">Κανένα ερχόμενο ραντεβού.</p>'}
  ${past.length?`<h3>Προηγούμενα</h3>${past.slice(0,20).map(apRow).join('')}`:''}</div>
- <div class="card"><h2>Έκδοση εφαρμογής</h2>
+ ${prevCard()}${lockCard()}
+ <div class="card"><h2>Έκδοση εφαρμογής ${hq('version')}</h2>
  <div>Έχετε την έκδοση <b>${APP_VERSION}</b></div>
  <div class="mut" id="updstat">${D.settings.lastCheck?'Τελευταίος έλεγχος: '+fmtS(new Date(D.settings.lastCheck))+' '+hm(new Date(D.settings.lastCheck)):''}</div>
  <div class="row" style="margin-top:8px"><button class="pri" data-act="checkupd">Έλεγχος για αναβάθμιση</button><button data-act="whatsnew">Τι νέο</button></div>
  <div class="mut" style="margin-top:6px">Η αναβάθμιση γίνεται αυτόματα όταν ανοίγετε την εφαρμογή. Τα δεδομένα σας δεν επηρεάζονται.</div></div>
- <div class="card"><h2>Τεχνητή νοημοσύνη (δωρεάν)</h2>
- <div class="mut">Για την αναγνώριση φαρμάκων από φωτογραφία. Χρειάζεται δωρεάν κλειδί από το OpenRouter, χωρίς κάρτα. Αν έχετε ήδη κλειδί από το Identify-AI, βάλτε το ίδιο.</div>
+ <div class="card"><h2>Τεχνητή νοημοσύνη (δωρεάν) ${hq('ai')}</h2>
+ <div class="mut">Για αναγνώριση φαρμάκων, συνταγών και εξετάσεων από φωτογραφία, και για τον έλεγχο αλληλεπιδράσεων. Χρειάζεται δωρεάν κλειδί από το OpenRouter, χωρίς κάρτα. Αν έχετε ήδη κλειδί από το Identify-AI, βάλτε το ίδιο.</div>
  <label style="margin-top:8px">Κλειδί<input type="password" id="orkey" value="${esc(getKey())}" placeholder="sk-or-..." autocomplete="off"></label>
  <div class="row"><button class="pri" data-act="savekey">Αποθήκευση</button><button data-act="testkey">Δοκιμή</button><a class="btn" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener" style="text-decoration:none">Πάρτε κλειδί ↗</a></div>
  <div class="mut" id="keystat" style="margin-top:6px"></div>
  <div class="mut" style="margin-top:6px">Το κλειδί μένει μόνο σε αυτή τη συσκευή και δεν μπαίνει στα αντίγραφα ασφαλείας.</div></div>
- <div class="card"><h2>Υπενθυμίσεις</h2>
+ <div class="card"><h2>Υπενθυμίσεις ${hq('remind')}</h2>
  <div>Ειδοποιήσεις εφαρμογής: <b>${permT}</b></div>
  ${perm==='default'?'<button class="pri wide" style="margin-top:8px" data-act="notifon">Ενεργοποίηση ειδοποιήσεων</button>':''}
  <label class="ck" style="margin-top:10px"><input type="checkbox" data-act="sound" ${D.settings.sound?'checked':''}> Ήχος όταν είναι ώρα για χάπι</label>
@@ -401,7 +434,7 @@ function rPer(){
  <p class="mut">Οι ειδοποιήσεις της εφαρμογής βγαίνουν όταν αυτή είναι ανοιχτή ή πρόσφατα ανοιγμένη. Για υπενθύμιση που χτυπάει σίγουρα, ακόμη κι όταν η εφαρμογή είναι κλειστή, περάστε τις ώρες στο ημερολόγιο του κινητού:</p>
  <button class="wide" data-act="ics">📅 Προσθήκη στο ημερολόγιο του κινητού</button>
  <p class="mut">Αν αλλάξετε ώρες ή φάρμακα, διαγράψτε τα παλιά συμβάντα από το ημερολόγιο και ξαναπατήστε το κουμπί.</p></div>
- <div class="card"><h2>Αντίγραφα ασφαλείας</h2><div class="mut" id="bkinfo">…</div>
+ <div class="card"><h2>Αντίγραφα ασφαλείας ${hq('backup')}</h2><div class="mut" id="bkinfo">…</div>
  <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button class="small" data-act="clearfolder">✕ Αλλαγή φακέλου</button></div></div>
  <div class="card"><h2>Εγκατάσταση στο κινητό</h2><div class="mut">Άντροιντ (Χρώμιο): μενού ⋮ → «Προσθήκη στην αρχική οθόνη» ή «Εγκατάσταση εφαρμογής».<br>Άιφον (Σαφάρι): κουμπί κοινοποίησης → «Προσθήκη στην οθόνη Αφετηρίας».</div>${installEvt?'<button class="pri wide" style="margin-top:8px" data-act="install">Εγκατάσταση</button>':''}</div>
  <div class="card"><h2>Σημαντικό</h2><div class="mut">Τα δεδομένα μένουν μόνο στο κινητό σας και στον φάκελο αντιγράφων — δεν στέλνονται πουθενά. Η εφαρμογή βοηθά στην καταγραφή και δεν αντικαθιστά τον γιατρό σας. Μην αλλάζετε ή διακόπτετε φάρμακα χωρίς οδηγία γιατρού.</div>
@@ -411,6 +444,7 @@ function rPer(){
 
 /* ---------- Φόρμες ---------- */
 function openDlg(html,onOk){
+ if(typeof LOCKED!=='undefined'&&LOCKED)return;
  const d=$('#dlg');d.innerHTML='<form id="dform" novalidate>'+html+'</form>';
  const f=$('#dform');
  f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;if(onOk(new FormData(f),f)!==false)d.close()};
@@ -420,10 +454,11 @@ const btns=(extra)=>`<div class="acts">${extra||''}<button type="button" data-ac
 
 function bpForm(r){
  r=r||{};const t=r.t?new Date(r.t):new Date();
- openDlg(`<h2>${r.id?'Επεξεργασία μέτρησης':'Νέα μέτρηση πίεσης'}</h2>
- <div class="g3"><label>Μεγάλη<input name="sys" type="number" inputmode="numeric" min="50" max="280" required value="${r.sys||''}" autofocus></label><label>Μικρή<input name="dia" type="number" inputmode="numeric" min="30" max="200" required value="${r.dia||''}"></label><label>Σφυγμοί<input name="pulse" type="number" inputmode="numeric" min="25" max="250" value="${r.pulse||''}"></label></div>
+ openDlg(`<h2>${r.id?'Επεξεργασία μέτρησης':'Νέα μέτρηση πίεσης'} ${hq('measure')}</h2>
+ <div class="g3"><label>Μεγάλη ${hq('sys')}<input name="sys" type="number" inputmode="numeric" min="50" max="280" required value="${r.sys||''}" autofocus></label><label>Μικρή ${hq('dia')}<input name="dia" type="number" inputmode="numeric" min="30" max="200" required value="${r.dia||''}"></label><label>Σφυγμοί ${hq('pulse')}<input name="pulse" type="number" inputmode="numeric" min="25" max="250" value="${r.pulse||''}"></label></div>
+ ${!r.id&&navigator.bluetooth?`<div class="aibox"><div class="row"><button type="button" class="grow" data-act="ble">📶 Από πιεσόμετρο (δοκιμαστικό)</button>${hq('ble')}</div><div class="mut" id="blest"></div></div>`:''}
  <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${dkey(t)}"></label><label>Ώρα<input type="time" name="h" required value="${hm(t)}"></label></div>
- <div class="g2"><label>Χέρι<select name="arm">${['','αριστερό','δεξί'].map(v=>`<option ${r.arm===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label><label>Θέση<select name="pos">${['','καθιστός','ξαπλωμένος','όρθιος'].map(v=>`<option ${r.pos===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label></div>
+ <div class="g2"><label>Χέρι ${hq('arm')}<select name="arm">${['','αριστερό','δεξί'].map(v=>`<option ${r.arm===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label><label>Θέση<select name="pos">${['','καθιστός','ξαπλωμένος','όρθιος'].map(v=>`<option ${r.pos===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label></div>
  <fieldset><legend>Συμπτώματα</legend>${SYMS.map(s=>`<label class="ck"><input type="checkbox" name="sym" value="${s}" ${(r.sym||[]).includes(s)?'checked':''}>${s}</label>`).join('')}</fieldset>
  <label>Σημείωση<textarea name="note" placeholder="π.χ. πριν το πρωινό χάπι, μετά από περπάτημα">${esc(r.note||'')}</textarea></label>
  ${btns(r.id?`<button type="button" class="danger" data-act="delbp" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
@@ -444,20 +479,21 @@ function medForm(m){
  const alld=!m.days||!m.days.length||m.days.length===7;
  openDlg(`<h2>${n?'Νέο φάρμακο':'Επεξεργασία φαρμάκου'}</h2>
  <div class="aibox"><div class="row"><button type="button" class="pri grow" data-act="aiphoto">📷 Φωτογραφία κουτιού</button><button type="button" class="grow" data-act="ainame">🔎 Βρες από το όνομα</button></div>
- <div class="mut" id="aistat" style="margin-top:6px">Η τεχνητή νοημοσύνη διαβάζει το κουτί και συμπληρώνει τι κάνει, δραστική ουσία και παρενέργειες.</div></div>
+ <div class="mut" id="aistat" style="margin-top:6px">Η τεχνητή νοημοσύνη διαβάζει το κουτί και συμπληρώνει τι κάνει, δραστική ουσία και παρενέργειες. ${hq('ai')}</div></div>
  <label>Όνομα φαρμάκου *<input name="name" required value="${esc(m.name||'')}" placeholder="όπως γράφει το κουτί"></label>
  <div class="g2"><label>Περιεκτικότητα<input name="strength" value="${esc(m.strength||'')}" placeholder="π.χ. 5 mg"></label><label>Μορφή<select name="form"><option value="">—</option>${FORMS.map(f=>`<option ${m.form===f?'selected':''}>${f}</option>`).join('')}</select></label></div>
- <label>Δραστική ουσία<input name="substance" value="${esc(m.substance||'')}"></label>
+ <label>Δραστική ουσία ${hq('substance')}<input name="substance" value="${esc(m.substance||'')}"></label>
  <label>Τι κάνει / για ποιο λόγο το παίρνω<textarea name="purpose" placeholder="π.χ. για την πίεση, αραιώνει το αίμα">${esc(m.purpose||'')}</textarea></label>
- <div class="g2"><label>Δόση ανά λήψη<input name="dose" value="${esc(m.dose||'')}" placeholder="π.χ. 1 δισκίο"></label><label>Σχέση με φαγητό<select name="food">${Object.keys(FOOD).map(k=>`<option value="${k}" ${m.food===k?'selected':''}>${FOOD[k]||'—'}</option>`).join('')}</select></label></div>
- <label class="ck"><input type="checkbox" name="prn" ${m.prn?'checked':''} data-act="prntoggle"> Μόνο όταν χρειάζεται (χωρίς σταθερή ώρα)</label>
+ <div class="g2"><label>Δόση ανά λήψη<input name="dose" value="${esc(m.dose||'')}" placeholder="π.χ. 1 δισκίο"></label><label>Σχέση με φαγητό ${hq('food')}<select name="food">${Object.keys(FOOD).map(k=>`<option value="${k}" ${m.food===k?'selected':''}>${FOOD[k]||'—'}</option>`).join('')}</select></label></div>
+ <label class="ck"><input type="checkbox" name="prn" ${m.prn?'checked':''} data-act="prntoggle"> Μόνο όταν χρειάζεται (χωρίς σταθερή ώρα)</label> ${hq('prn')}
  <div id="schedBox" style="${m.prn?'display:none':''}">
   <fieldset><legend>Ώρες λήψης</legend><div class="times" id="times">${(m.times&&m.times.length?m.times:['']).map(timeRow).join('')}</div><button type="button" class="small" data-act="addtime">+ Άλλη ώρα</button></fieldset>
-  <fieldset><legend>Ημέρες</legend><label class="ck"><input type="checkbox" name="alldays" ${alld?'checked':''} data-act="alldays"> Κάθε μέρα</label><div id="daysBox" style="${alld?'display:none':''}">${[1,2,3,4,5,6,0].map(d=>`<label class="ck"><input type="checkbox" name="day" value="${d}" ${!alld&&m.days.includes(d)?'checked':''}>${MERES_S[d]}</label>`).join('')}</div></fieldset>
+  <fieldset><legend>Ημέρες</legend><label class="ck"><input type="checkbox" name="alldays" ${alld?'checked':''} data-act="alldays"> Κάθε μέρα</label><label class="ck"><input type="checkbox" name="useint" ${+m.interval>1?'checked':''} data-act="inttoggle"> Κάθε <input type="number" name="interval" min="2" max="90" value="${+m.interval>1?m.interval:2}" style="display:inline-block;width:70px;margin:0 4px;min-height:34px;padding:4px"> ημέρες</label>${hq('interval')}<div id="daysBox" style="${alld?'display:none':''}">${[1,2,3,4,5,6,0].map(d=>`<label class="ck"><input type="checkbox" name="day" value="${d}" ${!alld&&m.days.includes(d)?'checked':''}>${MERES_S[d]}</label>`).join('')}</div></fieldset>
  </div>
  <div class="g2"><label>Έναρξη<input type="date" name="start" value="${m.start||dkey(new Date())}"></label><label>Λήξη (αν είναι σχήμα π.χ. 7 ημερών)<input type="date" name="until" value="${m.until||''}"></label></div>
- <label>Γιατρός που το έγραψε<input name="doctor" value="${esc(m.doctor||'')}"></label>
- <div class="g2"><label>Απόθεμα (τεμάχια)<input type="number" inputmode="numeric" name="stock" min="0" value="${m.stock??''}"></label><label>Τεμάχια ανά λήψη<input type="number" inputmode="decimal" step="0.25" name="perDose" min="0" value="${m.perDose||1}"></label></div>
+ <div class="g2"><label>Γιατρός που το έγραψε<input name="doctor" value="${esc(m.doctor||'')}"></label><label>Η συνταγή λήγει ${hq('rxend')}<input type="date" name="rxEnd" value="${m.rxEnd||''}"></label></div>
+ <div class="row" style="margin-bottom:10px"><img id="pillpv" class="pthumb" style="width:56px;height:56px;${m.photo?'':'display:none'}" src="${m.photo||''}" alt=""><button type="button" class="small" data-act="pillphoto">🖼 Φωτογραφία χαπιού</button>${hq('pill')}<input type="hidden" name="photo" value="${m.photo||''}"></div>
+ <div class="g2"><label>Απόθεμα (τεμάχια) ${hq('stock')}<input type="number" inputmode="numeric" name="stock" min="0" value="${m.stock??''}"></label><label>Τεμάχια ανά λήψη<input type="number" inputmode="decimal" step="0.25" name="perDose" min="0" value="${m.perDose||1}"></label></div>
  <label>Συχνές παρενέργειες<textarea name="sideEffects">${esc(m.sideEffects||'')}</textarea></label>
  <label>Προσοχή / αλληλεπιδράσεις<textarea name="warnings">${esc(m.warnings||'')}</textarea></label>
  <label>Σημειώσεις<textarea name="notes">${esc(m.notes||'')}</textarea></label>
@@ -468,8 +504,9 @@ function medForm(m){
   const times=[...new Set(fd.getAll('time').filter(Boolean))].sort();
   if(!prn&&!times.length){alert('Βάλτε τουλάχιστον μία ώρα λήψης ή επιλέξτε «όταν χρειάζεται».');return false}
   const days=fd.get('alldays')?[]:fd.getAll('day').map(Number);
-  if(!prn&&!fd.get('alldays')&&!days.length){alert('Επιλέξτε ημέρες ή «Κάθε μέρα».');return false}
-  const o=Object.assign({},m,{id:m.id||uid(),name:fd.get('name').trim(),strength:fd.get('strength').trim(),form:fd.get('form'),substance:fd.get('substance').trim(),purpose:fd.get('purpose').trim(),dose:fd.get('dose').trim(),food:fd.get('food'),prn,times:prn?[]:times,days,start:fd.get('start'),until:fd.get('until'),doctor:fd.get('doctor').trim(),stock:fd.get('stock')===''?'':+fd.get('stock'),perDose:+fd.get('perDose')||1,notes:fd.get('notes').trim(),sideEffects:(fd.get('sideEffects')||'').trim(),warnings:(fd.get('warnings')||'').trim(),ai:!!fd.get('ai')});
+  if(!prn&&!fd.get('alldays')&&!fd.get('useint')&&!days.length){alert('Επιλέξτε ημέρες ή «Κάθε μέρα».');return false}
+  const o=Object.assign({},m,{id:m.id||uid(),name:fd.get('name').trim(),strength:fd.get('strength').trim(),form:fd.get('form'),substance:fd.get('substance').trim(),purpose:fd.get('purpose').trim(),dose:fd.get('dose').trim(),food:fd.get('food'),prn,times:prn?[]:times,days,start:fd.get('start'),until:fd.get('until'),doctor:fd.get('doctor').trim(),stock:fd.get('stock')===''?'':+fd.get('stock'),perDose:+fd.get('perDose')||1,notes:fd.get('notes').trim(),sideEffects:(fd.get('sideEffects')||'').trim(),warnings:(fd.get('warnings')||'').trim(),ai:!!fd.get('ai'),rxEnd:fd.get('rxEnd')||'',photo:fd.get('photo')||'',interval:fd.get('useint')&&!prn?Math.max(2,+fd.get('interval')||2):0});
+  if(o.interval)o.days=[];
   if(n){o.active=true;o.history=[];addHist(o,'Έναρξη: '+[o.strength,o.dose,freqText(o)].filter(Boolean).join(' · '));D.meds.push(o)}
   else{
    const ch=[];
@@ -481,10 +518,11 @@ function medForm(m){
    D.meds[D.meds.findIndex(x=>x.id===m.id)]=o;
   }
   save();render();toast('Αποθηκεύτηκε');
+  if(n&&getKey())setTimeout(()=>interCheck(o,true),400);
  });
 }
 function stopForm(m){
- openDlg(`<h2>Διακοπή: ${esc(m.name)}</h2><label>Ημερομηνία διακοπής<input type="date" name="end" required value="${dkey(new Date())}"></label><label>Λόγος<input name="reason" placeholder="π.χ. οδηγία γιατρού, παρενέργεια, τέλος θεραπείας"></label><p class="mut">Το φάρμακο θα μετακινηθεί στη λίστα «Διακοπή» και θα κρατηθεί στο ιστορικό.</p>${btns()}`,
+ openDlg(`<h2>Διακοπή: ${esc(m.name)} ${hq('stop')}</h2><label>Ημερομηνία διακοπής<input type="date" name="end" required value="${dkey(new Date())}"></label><label>Λόγος<input name="reason" placeholder="π.χ. οδηγία γιατρού, παρενέργεια, τέλος θεραπείας"></label><p class="mut">Το φάρμακο θα μετακινηθεί στη λίστα «Διακοπή» και θα κρατηθεί στο ιστορικό.</p>${btns()}`,
  fd=>{m.active=false;m.end=fd.get('end');m.endReason=fd.get('reason').trim();addHist(m,'Διακοπή'+(m.endReason?': '+m.endReason:''));save();render();toast('Το φάρμακο διακόπηκε')});
 }
 function histDlg(m){
@@ -498,12 +536,17 @@ function profileForm(){
  <label>Ονοματεπώνυμο<input name="name" value="${esc(p.name||'')}"></label>
  <div class="g2"><label>Ημερομηνία γέννησης<input type="date" name="birth" value="${p.birth||''}"></label><label>Ομάδα αίματος<select name="blood">${['','Α+','Α−','Β+','Β−','ΑΒ+','ΑΒ−','Ο+','Ο−'].map(v=>`<option ${p.blood===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label></div>
  <label>ΑΜΚΑ<input name="amka" inputmode="numeric" value="${esc(p.amka||'')}"></label>
+ <fieldset><legend>Σώμα & τρόπος ζωής ${hq('body')}</legend>
+ <div class="g3"><label>Φύλο<select name="sex"><option value="">—</option><option value="m" ${p.sex==='m'?'selected':''}>Άνδρας</option><option value="f" ${p.sex==='f'?'selected':''}>Γυναίκα</option></select></label><label>Ύψος (εκ.)<input type="number" inputmode="numeric" name="height" min="100" max="230" value="${p.height||''}"></label><label>Βάρος (κιλά)<input type="number" inputmode="decimal" step="0.1" name="weight" min="30" max="300" value="${p.weight||''}"></label></div>
+ <label>Σωματική δραστηριότητα ${hq('activity')}<select name="activity">${Object.entries(ACT).map(([k,v])=>`<option value="${k}" ${p.activity===k?'selected':''}>${v}</option>`).join('')}</select></label>
+ <label class="ck"><input type="checkbox" name="smoker" ${p.smoker?'checked':''}> Καπνίζω</label><label class="ck"><input type="checkbox" name="diabetes" ${p.diabetes?'checked':''}> Διαβήτης</label><label class="ck"><input type="checkbox" name="kidney" ${p.kidney?'checked':''}> Νεφρική νόσος</label><label class="ck"><input type="checkbox" name="heart" ${p.heart?'checked':''}> Καρδιοπάθεια / εγκεφαλικό</label>
+ </fieldset>
  <label>Αλλεργίες (φάρμακα, τροφές κ.λπ.)<textarea name="allergies" placeholder="π.χ. πενικιλίνη">${esc(p.allergies||'')}</textarea></label>
  <label>Παθήσεις / επεμβάσεις<textarea name="conditions">${esc(p.conditions||'')}</textarea></label>
  <label>Επαφή έκτακτης ανάγκης<input name="contact" value="${esc(p.contact||'')}" placeholder="όνομα και τηλέφωνο"></label>
  <label>Θεράπων γιατρός<input name="doctor" value="${esc(p.doctor||'')}" placeholder="όνομα, ειδικότητα, τηλέφωνο"></label>
  <label>Άλλα (βηματοδότης, εμφυτεύματα, κ.λπ.)<textarea name="other">${esc(p.other||'')}</textarea></label>${btns()}`,
- fd=>{['name','birth','blood','amka','allergies','conditions','contact','doctor','other'].forEach(k=>p[k]=(fd.get(k)||'').trim());save();render();toast('Αποθηκεύτηκε')});
+ fd=>{['name','birth','blood','amka','allergies','conditions','contact','doctor','other','sex','activity'].forEach(k=>p[k]=(fd.get(k)||'').trim());p.height=+fd.get('height')||'';p.weight=+fd.get('weight')||'';['smoker','diabetes','kidney','heart'].forEach(k=>p[k]=!!fd.get(k));save();render();toast('Αποθηκεύτηκε')});
 }
 function apptForm(a){
  const n=!a;a=a||{};
@@ -541,15 +584,14 @@ async function notif(title,body,tag,actions){
 }
 function beep(){if(!D.settings.sound)return;try{const c=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.setValueAtTime(.001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+t+.28);o.connect(g).connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.3)})}catch(e){}}
 function checkReminders(){
- const now=new Date(),nm=now.getHours()*60+now.getMinutes();let ch=false;
- dueList(now).forEach(i=>{const [a,b]=i.time.split(':').map(Number),t=a*60+b,k=doseKey(now,i.med,i.time);
-  if(nm>=t&&nm-t<=180&&!D.doses[k]&&!D.notified[k]){D.notified[k]=1;ch=true;
-   notif('💊 Ώρα για '+i.med.name,[i.med.strength,i.med.dose,FOOD[i.med.food]].filter(Boolean).join(' · ')+' ('+i.time+')',k,[{action:'take',title:'✓ Το πήρα'}]);beep()}});
- const td=dkey(now);
- D.appts.filter(a=>!a.done&&a.d===td).forEach(a=>{const k='appt|'+a.id;if(!D.notified[k]&&now.getHours()>=7){D.notified[k]=1;ch=true;notif('📅 Σήμερα: '+a.title,[a.h,a.place].filter(Boolean).join(' · '),k)}});
- // καθαρισμός παλιών
- const lim=dkey(new Date(Date.now()-3*864e5));Object.keys(D.notified).forEach(k=>{if(/^\d{4}-/.test(k)&&k.slice(0,10)<lim){delete D.notified[k];ch=true}});
- if(ch)persist();
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes(),td=dkey(now),multi=PEOPLE.list.length>1;
+ eachPerson((X,p,isCur)=>{let ch=false;const who=multi?(X.profile.name||'')+': ':'';
+  dueList(now).forEach(i=>{const [a,b]=i.time.split(':').map(Number),t=a*60+b,k=doseKey(now,i.med,i.time);
+   if(nm>=t&&nm-t<=180&&!X.doses[k]&&!X.notified[k]){X.notified[k]=1;ch=true;
+    notif('💊 '+who+'Ώρα για '+i.med.name,[i.med.strength,i.med.dose,FOOD[i.med.food]].filter(Boolean).join(' · ')+' ('+i.time+')',isCur?k:p.id+'~'+k,[{action:'take',title:'✓ Το πήρα'}]);beep()}});
+  X.appts.filter(a=>!a.done&&a.d===td).forEach(a=>{const k='appt|'+a.id;if(!X.notified[k]&&now.getHours()>=7){X.notified[k]=1;ch=true;notif('📅 '+who+'Σήμερα: '+a.title,[a.h,a.place].filter(Boolean).join(' · '),k)}});
+  const lim=dkey(new Date(Date.now()-3*864e5));Object.keys(X.notified).forEach(k=>{if(/^\d{4}-/.test(k)&&k.slice(0,10)<lim){delete X.notified[k];ch=true}});
+  if(isCur&&ch)persist();return ch});
  checkBanner();
 }
 function checkBanner(){
@@ -569,9 +611,9 @@ function makeIcs(){
  const BD=['SU','MO','TU','WE','TH','FR','SA'];
  const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//fakelos-ygeias//el','CALSCALE:GREGORIAN','X-WR-CALNAME:Φάρμακα'];
  meds.forEach(m=>{
-  const sd=m.start&&m.start>dkey(now)?fromKey(m.start):now;
+  const sd=m.start&&(m.start>dkey(now)||+m.interval>1)?fromKey(m.start):now;
   m.times.forEach(t=>{const [h,mi]=t.split(':');
-   let rr='RRULE:FREQ='+(m.days&&m.days.length&&m.days.length<7?'WEEKLY;BYDAY='+m.days.map(d=>BD[d]).join(','):'DAILY');
+   let rr='RRULE:FREQ='+(+m.interval>1?'DAILY;INTERVAL='+m.interval:m.days&&m.days.length&&m.days.length<7?'WEEKLY;BYDAY='+m.days.map(d=>BD[d]).join(','):'DAILY');
    if(m.until)rr+=';UNTIL='+m.until.replace(/-/g,'')+'T235959';
    const txt='💊 '+m.name+(m.strength?' '+m.strength:'')+(m.dose?' — '+m.dose:'');
    L.push('BEGIN:VEVENT','UID:'+m.id+'-'+t.replace(':','')+'@fakelos-ygeias','DTSTAMP:'+st,
@@ -608,7 +650,7 @@ async function pickRoot(){const h=await window.showDirectoryPicker({id:'backups'
 async function perm(h,ask){const o={mode:'readwrite'};try{if(await h.queryPermission(o)==='granted')return true;if(ask)return(await h.requestPermission(o))==='granted'}catch(e){}return false}
 const bkName=()=>'fakelos-ygeias-'+dkey(new Date())+'.json';
 async function backupNow(ask){
- const data=JSON.stringify(D);
+ const data=JSON.stringify(allData());
  let root=await getRoot();
  if(!root&&ask&&window.showDirectoryPicker){try{root=await pickRoot()}catch(e){root=null}}
  if(root&&await perm(root,ask)){
@@ -635,7 +677,10 @@ async function restoreList(){
  window._rfiles=files;
 }
 function applyRestore(text){
- try{const x=JSON.parse(text);if(!x||typeof x!=='object'||!('meds' in x||'bp' in x))throw 0;
+ try{const x=JSON.parse(text);
+  if(x&&x.people&&x.data){if(!confirm('Θα γίνει επαναφορά '+x.people.list.length+' φακέλων από το αντίγραφο. Τα τωρινά δεδομένα θα αντικατασταθούν. Συνέχεια;'))return;
+   PEOPLE.list.forEach(p=>{if(!x.data[p.key])try{localStorage.removeItem(p.key)}catch(e){}});Object.entries(x.data).forEach(([k,v])=>localStorage.setItem(k,JSON.stringify(v)));PEOPLE=x.people;savePeople();KEY=(PEOPLE.list.find(p=>p.id===PEOPLE.cur)||PEOPLE.list[0]).key;D=load();$('#dlg').open&&$('#dlg').close();render();toast('Έγινε επαναφορά');return}
+  if(!x||typeof x!=='object'||!('meds' in x||'bp' in x))throw 0;
   if(!confirm('Τα τωρινά δεδομένα θα αντικατασταθούν από το αντίγραφο. Συνέχεια;'))return;
   D=fix(x);persist();$('#dlg').open&&$('#dlg').close();render();toast('Έγινε επαναφορά')}catch(e){alert('Το αρχείο δεν είναι έγκυρο αντίγραφο αυτής της εφαρμογής.')}
 }
@@ -684,7 +729,7 @@ async function aiRun(file,name){
  const set=t=>{if(st)st.innerHTML=t};btns.forEach(b=>b.disabled=true);
  try{
   set('⏳ Ετοιμασία…');const content=[{type:'text',text:AI_PROMPT+(name?'\nΤο φάρμακο είναι: '+name:'\nΔες τη φωτογραφία της συσκευασίας.')}];
-  if(file){const url=await shrink(file);content.push({type:'image_url',image_url:{url}})}
+  if(file){const url=await shrink(file);content.push({type:'image_url',image_url:{url}});try{const f0=$('#dform');if(f0&&f0.elements.photo&&!f0.elements.photo.value){const tu=await thumb(file,260,0.7);f0.elements.photo.value=tu;const pv=$('#pillpv');if(pv){pv.src=tu;pv.style.display='block'}}}catch(_){}}
   const models=await freeModels(false);
   set('⏳ Η τεχνητή νοημοσύνη αναζητά το φάρμακο…');
   let r;try{r=await aiCall(content,models.slice(0,6))}catch(e){if(e.fatal)throw e;r=await aiCall(content,(await freeModels(true)).slice(0,6))}
@@ -700,6 +745,93 @@ async function aiRun(file,name){
  finally{btns.forEach(b=>b.disabled=false)}
 }
 $('#camIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)aiRun(f,($('#dform [name=name]')||{}).value||'')});
+
+/* ---------- Προσωπικά στοιχεία, στόχοι & βοήθεια ---------- */
+const ACT={'':'—',sed:'Καθιστική ζωή',light:'Λίγη κίνηση (περπάτημα)',mod:'Τακτική άσκηση 2–4 φορές/εβδ.',ath:'Αθλητής / έντονη καθημερινή άσκηση'};
+const hq=k=>`<span class="q" role="button" tabindex="0" data-act="help" data-k="${k}" aria-label="Πληροφορίες">?</span>`;
+function ageOf(){const b=D.profile.birth;if(!b)return null;const d=fromKey(b),n=new Date();let a=n.getFullYear()-d.getFullYear();if(n.getMonth()<d.getMonth()||(n.getMonth()===d.getMonth()&&n.getDate()<d.getDate()))a--;return a}
+function body(){const p=D.profile,h=+p.height,w=+p.weight;if(!h||!w)return null;const m=h/100,bmi=w/(m*m);
+ return{bmi:Math.round(bmi*10)/10,min:Math.round(18.5*m*m),max:Math.round(24.9*m*m),ideal:Math.round(22*m*m),
+  cat:bmi<18.5?'λιποβαρής':bmi<25?'φυσιολογικό βάρος':bmi<30?'υπέρβαρος':'παχυσαρκία',col:bmi<18.5?'var(--blue)':bmi<25?'var(--green)':bmi<30?'var(--orange)':'var(--red)'}}
+// Κατά προσέγγιση μέση πίεση πληθυσμού ανά ηλικία/φύλο (περιγραφική, όχι στόχος)
+function popAvg(age,sex){const T={m:[[40,118,72],[60,124,78],[80,131,73],[200,136,68]],f:[[40,109,69],[60,120,75],[80,132,70],[200,139,66]]};const r=(T[sex]||T.m).find(x=>age<x[0]);return r?[r[1],r[2]]:null}
+function target(age){if(age!=null&&age>=85)return{s:[120,140],d:[70,80],txt:'έως 140/80 — ο στόχος εξατομικεύεται από τον γιατρό'};return{s:[120,129],d:[70,79],txt:'μεγάλη 120–129, μικρή 70–79'}}
+function pulseRange(){const a=D.profile.activity;return a==='ath'?[40,60,'αθλητή']:a==='mod'?[50,80,'άτομο που γυμνάζεται τακτικά']:[60,100,'ενήλικα']}
+function meterPos(s){return Math.max(2,Math.min(98,(s-80)/(190-80)*100))}
+function personalCard(st){
+ const p=D.profile,age=ageOf(),b=body(),t=target(age);
+ let h=`<div class="card"><h2>Για εσάς ${hq('personal')}</h2>`;
+ if(age==null||!p.height||!p.weight||!p.sex){h+=`<div class="mut">Δηλώστε ηλικία, φύλο, ύψος και βάρος για να δείτε τι ισχύει για εσάς.</div><button class="wide" style="margin-top:8px" data-act="profile">✎ Συμπλήρωση στοιχείων</button>`;if(age==null&&!b)return h+'</div>'}
+ h+=`<div class="kv" style="margin-top:6px">`;
+ if(age!=null)h+=`<div>Ηλικία</div><div><b>${age}</b> ετών${p.sex?(p.sex==='m'?' · άνδρας':' · γυναίκα'):''}</div>`;
+ h+=`<div>Στόχος πίεσης ${hq('target')}</div><div><b>${t.txt}</b></div>`;
+ if(age!=null&&p.sex){const pa=popAvg(age,p.sex);h+=`<div>Μέσος όρος ηλικίας σας ${hq('popavg')}</div><div>περίπου ${pa[0]}/${pa[1]}</div>`}
+ h+=`<div>Όριο υπέρτασης (σπίτι)</div><div>135/85</div>`;
+ const pr=pulseRange();h+=`<div>Σφυγμοί ηρεμίας ${hq('pulse')}</div><div>${pr[0]}–${pr[1]} για ${pr[2]}${st&&st.pulse?` · εσείς <b>${st.pulse}</b>`:''}</div>`;
+ if(b){h+=`<div>Δείκτης μάζας σώματος ${hq('bmi')}</div><div><b style="color:${b.col}">${b.bmi}</b> — ${b.cat}</div><div>Υγιές βάρος για σας</div><div><b>${b.min}–${b.max}</b> κιλά (ιδανικό ≈ ${b.ideal})</div>`}
+ h+=`</div>`;
+ if(st){
+  const inT=st.sys<=t.s[1]&&st.dia<=t.d[1],low=st.sys<t.s[0]-15;
+  h+=`<div class="meter"><i style="left:${meterPos(st.sys)}%"></i></div><div class="mut" style="display:flex;justify-content:space-between;font-size:12px"><span>χαμηλή</span><span>φυσιολογική</span><span>υψηλή</span></div>`;
+  h+=`<div style="margin-top:8px">Ο μέσος όρος σας <b>${st.sys}/${st.dia}</b> ${inT?(low?'είναι χαμηλότερος από τον συνήθη στόχο — αν έχετε ζάλη, ενημερώστε τον γιατρό.':'<b style="color:var(--green)">είναι μέσα στον στόχο</b>. 👍'):`<b style="color:var(--orange)">είναι πάνω από τον στόχο</b> κατά ${Math.max(0,st.sys-t.s[1])} στη μεγάλη${st.dia>t.d[1]?' και '+(st.dia-t.d[1])+' στη μικρή':''}.`}</div>`;
+  if(b&&+p.weight>b.max&&!inT){const kg=Math.round(+p.weight-b.max);h+=`<div class="mut" style="margin-top:6px">⚖️ Αν φτάσετε τα ${b.max} κιλά (−${kg}), η μεγάλη πίεση μπορεί να πέσει περίπου ${kg} μονάδες ${hq('weightbp')}</div>`}
+ }
+ const rf=[p.smoker&&'κάπνισμα',p.diabetes&&'διαβήτης',p.kidney&&'νεφρική νόσος',p.heart&&'καρδιοπάθεια',b&&b.bmi>=30&&'παχυσαρκία',p.activity==='sed'&&'καθιστική ζωή'].filter(Boolean);
+ if(rf.length)h+=`<div class="mut" style="margin-top:6px">⚠️ Παράγοντες κινδύνου: ${rf.join(', ')} — κάνουν ακόμα πιο σημαντικό να είναι η πίεση στον στόχο. ${hq('risk')}</div>`;
+ return h+`<div class="mut" style="font-size:12px;margin-top:8px">Ενδεικτικά, με βάση τις ευρωπαϊκές οδηγίες. Τον δικό σας στόχο τον ορίζει ο γιατρός.</div></div>`;
+}
+function edSec(f,label){const v=D.profile[f];return `<div class="lbl">${label}</div><div class="edf ${v?'':'noprint'}" data-act="editf" data-f="${f}"><span class="pen">✎</span>${v?`<div>${esc(v)}</div>`:'<span class="ph">πατήστε για συμπλήρωση</span>'}</div>`}
+const FIELDS={allergies:['Αλλεργίες','π.χ. πενικιλίνη — εξάνθημα'],conditions:['Παθήσεις / ιστορικό','π.χ. υπέρταση από το 2018, χολοκυστεκτομή 2020'],contact:['Επαφή έκτακτης ανάγκης','όνομα, σχέση, τηλέφωνο'],doctor:['Θεράπων γιατρός','όνομα, ειδικότητα, τηλέφωνο'],other:['Άλλα','βηματοδότης, εμφυτεύματα, φακοί επαφής κ.λπ.']};
+const ALCH=['Πενικιλίνη','Αμοξικιλλίνη','Κεφαλοσπορίνες','Ασπιρίνη','Αντιφλεγμονώδη (ιβουπροφένη κ.ά.)','Σουλφοναμίδες','Κωδεΐνη / οπιοειδή','Σκιαγραφικά / ιώδιο','Τοπικά αναισθητικά','Λάτεξ','Τσίμπημα μέλισσας','Ξηροί καρποί','Οστρακοειδή','Αυγό','Γάλα','Γύρη'];
+function fieldForm(f){
+ const p=D.profile,[t,ph]=FIELDS[f];
+ openDlg(`<h2>${t} ${f==='allergies'?hq('allergies'):''}</h2>
+ ${f==='allergies'?`<div class="mut" style="margin-bottom:6px">Πατήστε για γρήγορη προσθήκη:</div><div class="chips" style="margin-bottom:10px">${ALCH.map(a=>`<button type="button" class="chip" data-act="alchip" data-v="${a}">+ ${a}</button>`).join('')}</div>`:''}
+ <label>${t}<textarea name="v" placeholder="${ph}" style="min-height:100px" autofocus>${esc(p[f]||'')}</textarea></label>
+ ${f==='allergies'?`<label class="ck"><input type="checkbox" name="none" ${p.noAllergy&&!p.allergies?'checked':''}> Καμία γνωστή αλλεργία</label>`:''}${btns()}`,
+ fd=>{p[f]=(fd.get('v')||'').trim();if(f==='allergies')p.noAllergy=!!fd.get('none')&&!p[f];save();render();toast('Αποθηκεύτηκε')});
+}
+function helpDlg(k){
+ const H=HELP[k];if(!H)return;const [t,c]=typeof H==='function'?H():H;
+ const d=$('#hdlg');d.innerHTML=`<form method="dialog" style="padding:16px"><h2>ℹ️ ${t}</h2><div style="line-height:1.55">${c}</div><div class="acts"><button type="button" class="pri" data-act="hclose">Εντάξει</button></div></form>`;d.showModal();
+}
+const HELP={
+ personal:()=>{const age=ageOf(),b=body(),p=D.profile;return['Τι ισχύει για εσάς',`Εδώ συγκρίνονται οι μετρήσεις σας με όσα ισχύουν για την ηλικία, το βάρος και τη δραστηριότητά σας.<ul><li><b>Στόχος</b>: η πίεση που προτείνουν οι ευρωπαϊκές οδηγίες για ${age!=null?'ηλικία '+age:'την ηλικία σας'}.</li><li><b>Μέσος όρος ηλικίας</b>: τι έχουν συνήθως οι συνομήλικοί σας — δεν σημαίνει ότι είναι υγιές.</li><li><b>Βάρος</b>: ${b?'το υγιές εύρος για ύψος '+p.height+' εκ. είναι '+b.min+'–'+b.max+' κιλά':'δηλώστε ύψος και βάρος για να υπολογιστεί'}.</li></ul>`]},
+ target:()=>{const age=ageOf(),t=target(age);return['Στόχος πίεσης',`Για ${age!=null?'ηλικία <b>'+age+'</b>':'ενήλικες'}, ο προτεινόμενος στόχος είναι <b>${t.txt}</b>, αρκεί να τον αντέχετε χωρίς ζαλάδες.<br><br>Ο στόχος <b>δεν αλλάζει</b> για αθλητές ή για αδύνατους — ίδιος για όλους τους ενήλικες κάτω των 85. Σε μεγάλη ηλικία ή ευπάθεια ο γιατρός μπορεί να βάλει πιο χαλαρό στόχο.<br><br>Στο σπίτι η πίεση βγαίνει συνήθως λίγο χαμηλότερα από το ιατρείο· γι' αυτό το όριο υπέρτασης στο σπίτι είναι 135/85 (στο ιατρείο 140/90).`]},
+ popavg:()=>{const age=ageOf(),p=D.profile,pa=age!=null?popAvg(age,p.sex):null;return['Μέσος όρος για την ηλικία σας',`${pa?`Άτομα ${p.sex==='f'?'γυναίκες':'άνδρες'} περίπου ${age} ετών έχουν κατά μέσο όρο πίεση γύρω στο <b>${pa[0]}/${pa[1]}</b>.<br><br>`:''}Με την ηλικία η μεγάλη πίεση ανεβαίνει επειδή οι αρτηρίες σκληραίνουν, ενώ η μικρή μετά τα 60 συχνά πέφτει.<br><br><b>Προσοχή:</b> «συνηθισμένο» δεν σημαίνει «υγιές». Ο στόχος είναι ο ίδιος ανεξάρτητα από το τι έχουν οι συνομήλικοί σας.`]},
+ pulse:()=>{const pr=pulseRange();return['Σφυγμοί (παλμοί ηρεμίας)',`Πόσες φορές χτυπά η καρδιά το λεπτό σε ηρεμία.<ul><li>Ενήλικας: <b>60–100</b></li><li>Γυμνασμένος: <b>50–80</b></li><li>Αθλητής: <b>40–60</b> — η καρδιά είναι πιο δυνατή και χρειάζεται λιγότερους χτύπους</li></ul>Για εσάς (${pr[2]}): <b>${pr[0]}–${pr[1]}</b>.<br><br>Αν είναι συχνά πάνω από 100 ή κάτω από 50 χωρίς να είστε αθλητής, ή αν νιώθετε ακανόνιστο χτύπο, ενημερώστε τον γιατρό. Ορισμένα φάρμακα πίεσης (π.χ. β-αναστολείς) ρίχνουν τους σφυγμούς.`]},
+ bmi:()=>{const b=body(),p=D.profile;return['Δείκτης μάζας σώματος',`Υπολογίζεται: βάρος ÷ (ύψος σε μέτρα)².<ul><li>κάτω από 18,5: λιποβαρής</li><li>18,5–24,9: φυσιολογικό</li><li>25–29,9: υπέρβαρος</li><li>30 και πάνω: παχυσαρκία</li></ul>${b?`Εσείς: <b>${b.bmi}</b> (${b.cat}). Για ύψος ${p.height} εκ. το υγιές βάρος είναι <b>${b.min}–${b.max} κιλά</b>.`:''}<br><br>Σε μυώδεις αθλητές ο δείκτης βγαίνει ψηλά λόγω μυών, όχι λίπους — εκεί μετράει περισσότερο η περίμετρος μέσης (άνδρες κάτω από 94 εκ., γυναίκες κάτω από 80 εκ.).`]},
+ weightbp:['Βάρος και πίεση','Κατά μέσο όρο, <b>κάθε κιλό που χάνεται ρίχνει τη μεγάλη πίεση περίπου 1 μονάδα</b>. Και άλλα που βοηθούν:<ul><li>λιγότερο αλάτι: έως 5–6 μονάδες</li><li>30 λεπτά περπάτημα τις περισσότερες μέρες: 4–8 μονάδες</li><li>λιγότερο αλκοόλ: 2–4 μονάδες</li><li>διατροφή με φρούτα, λαχανικά, όσπρια: έως 8–11 μονάδες</li></ul>Μην αλλάζετε τα φάρμακα μόνοι σας επειδή έπεσε η πίεση — συζητήστε το με τον γιατρό.'],
+ risk:['Παράγοντες κινδύνου','Το κάπνισμα, ο διαβήτης, η νεφρική νόσος, η παχυσαρκία και η καθιστική ζωή αυξάνουν τον κίνδυνο για έμφραγμα και εγκεφαλικό. Όταν υπάρχουν, η καλή ρύθμιση της πίεσης έχει ακόμα μεγαλύτερο όφελος. Τους δηλώνετε στα «Προσωπικά στοιχεία».'],
+ activity:['Σωματική δραστηριότητα','Επηρεάζει κυρίως τους <b>φυσιολογικούς σφυγμούς</b>: ένας αθλητής έχει φυσιολογικά 40–60, ενώ ένας μη γυμνασμένος 60–100. Ο στόχος πίεσης είναι ίδιος για όλους.<br><br>Η τακτική άσκηση (π.χ. γρήγορο περπάτημα 150 λεπτά την εβδομάδα) ρίχνει την πίεση 4–8 μονάδες.'],
+ body:['Γιατί χρειάζονται αυτά','Με την ηλικία, το φύλο, το ύψος, το βάρος και τη δραστηριότητα η εφαρμογή σας δείχνει στόχο πίεσης, υγιές βάρος και φυσιολογικούς σφυγμούς <b>για εσάς</b>. Όλα μένουν μόνο στο κινητό σας.'],
+ measure:['Πώς μετράμε σωστά','<ol style="padding-left:20px;margin:0"><li>Ξεκούραση 5 λεπτά, καθιστός, πλάτη ακουμπισμένη, πόδια στο πάτωμα, όχι σταυρωμένα.</li><li>Χωρίς καφέ, τσιγάρο ή άσκηση 30 λεπτά πριν.</li><li>Άδεια κύστη.</li><li>Περιχειρίδα σε γυμνό μπράτσο, στο ύψος της καρδιάς.</li><li>Μην μιλάτε την ώρα της μέτρησης.</li><li>2 μετρήσεις με 1 λεπτό διαφορά, πρωί (πριν τα φάρμακα) και βράδυ.</li></ol><br>Πριν πάτε στον γιατρό, ιδανικά μετρήστε 7 συνεχόμενες μέρες.'],
+ sys:['Μεγάλη πίεση (συστολική)','Η πίεση στις αρτηρίες τη στιγμή που χτυπά η καρδιά — ο πρώτος, μεγαλύτερος αριθμός. Μετά τα 50 είναι ο πιο σημαντικός δείκτης κινδύνου.'],
+ dia:['Μικρή πίεση (διαστολική)','Η πίεση ανάμεσα στους χτύπους, όταν η καρδιά ξεκουράζεται — ο δεύτερος αριθμός. Είναι συνήθως πιο σημαντική σε νεότερες ηλικίες.'],
+ arm:['Ποιο χέρι','Την πρώτη φορά μετρήστε και στα δύο χέρια. Μετά χρησιμοποιείτε πάντα αυτό με την <b>υψηλότερη</b> τιμή. Διαφορά πάνω από 10–15 μονάδες ανάμεσα στα χέρια αξίζει να την πείτε στον γιατρό.'],
+ cats:()=>['Τι σημαίνουν τα χρώματα',`<div><span class="pill" style="background:var(--green)"></span><b>Άριστη / φυσιολογική</b>: κάτω από 135/85 (σπίτι)</div><div><span class="pill" style="background:var(--yellow)"></span><b>Οριακά υψηλή</b>: 135–139 / 85–89</div><div><span class="pill" style="background:var(--orange)"></span><b>Υψηλή 1ου βαθμού</b>: 140–159 / 90–99</div><div><span class="pill" style="background:var(--red)"></span><b>Υψηλή 2ου βαθμού</b>: 160 και πάνω / 100 και πάνω</div><div><span class="pill" style="background:var(--red)"></span><b>Πολύ υψηλή</b>: 180 / 110 και πάνω — ξαναμετρήστε σε 5 λεπτά, και με συμπτώματα καλέστε το 166</div><div><span class="pill" style="background:var(--blue)"></span><b>Χαμηλή</b>: κάτω από 90 / 60</div><br>Μία μέτρηση δεν λέει πολλά — σημασία έχει ο μέσος όρος πολλών ημερών.`],
+ avg:['Μέσος όρος','Ο μέσος όρος όλων των μετρήσεων του διαστήματος που διαλέξατε (7, 30, 90 ημέρες ή όλες). Αυτό κοιτάει κυρίως ο γιατρός, γιατί μία μεμονωμένη μέτρηση επηρεάζεται από άγχος, κίνηση ή καφέ.<br><br>«Πάνω από 135/85» δείχνει πόσες μετρήσεις ξεπέρασαν το όριο του σπιτιού.'],
+ zones:['Ανά ώρα της ημέρας','Η πίεση φυσιολογικά είναι πιο ψηλή το πρωί μετά το ξύπνημα και πέφτει τη νύχτα. Αν το πρωί είναι σταθερά πολύ πιο ψηλά ή αν το βράδυ δεν πέφτει, δείξτε το στον γιατρό — μπορεί να αλλάξει την ώρα που παίρνετε το φάρμακο.'],
+ weekday:['Ανά ημέρα της εβδομάδας','Δείχνει αν κάποιες μέρες βγαίνει πιο ψηλά, π.χ. μέρες δουλειάς ή άγχους, ή Σαββατοκύριακα με περισσότερο φαγητό, αλάτι ή αλκοόλ.'],
+ chart:['Γράφημα','Κόκκινη γραμμή: μεγάλη πίεση. Μπλε: μικρή. Οι διακεκομμένες είναι το όριο του σπιτιού 135 και 85. Ιδανικά και οι δύο γραμμές μένουν κάτω από τις διακεκομμένες.'],
+ today:['Φάρμακα σήμερα','Πατήστε «Το πήρα» όταν παίρνετε κάθε χάπι. Αν περάσει μισή ώρα, η λήψη γίνεται κόκκινη. Με την «Αναίρεση» διορθώνετε λάθος πάτημα. Από αυτά βγαίνει η τήρηση και μειώνεται αυτόματα το απόθεμα.'],
+ prn:['Όταν χρειάζεται','Φάρμακα χωρίς σταθερή ώρα, π.χ. παυσίπονο ή υπογλώσσιο. Κάθε φορά που παίρνετε ένα, πατάτε «Το πήρα τώρα» και καταγράφεται η ώρα.'],
+ stock:['Απόθεμα','Γράψτε πόσα χάπια έχετε. Κάθε «Το πήρα» αφαιρεί αυτόματα όσα λέει το «τεμάχια ανά λήψη». Όταν μείνουν χάπια για 7 μέρες ή λιγότερο, βγαίνει προειδοποίηση στην αρχική οθόνη για να κλείσετε έγκαιρα συνταγή.'],
+ adherence:['Τήρηση','Το ποσοστό των λήψεων που πατήσατε «Το πήρα» σε σχέση με όσες έπρεπε. Πάνω από 80% θεωρείται καλή τήρηση. Αν ξεχνάτε συχνά, βάλτε τις υπενθυμίσεις στο ημερολόγιο του κινητού.'],
+ meds:['Φάρμακα','<b>Ενεργά</b>: όσα παίρνετε τώρα. <b>Διακοπή</b>: όσα σταματήσατε — μένουν με ημερομηνία και λόγο, γιατί ο γιατρός συχνά ρωτάει «τι παίρνατε παλιότερα». <b>Ιστορικό</b>: κάθε αλλαγή δόσης ή ώρας.'],
+ food:['Σχέση με φαγητό','Ορισμένα φάρμακα απορροφώνται καλύτερα με άδειο στομάχι (π.χ. θυρεοειδούς, 30–60 λεπτά πριν το πρωινό). Άλλα θέλουν φαγητό για να μην ενοχλούν το στομάχι. Ακολουθήστε το φύλλο οδηγιών ή τον φαρμακοποιό.'],
+ substance:['Δραστική ουσία','Το χημικό όνομα του φαρμάκου, π.χ. «αμλοδιπίνη». Το ίδιο φάρμακο κυκλοφορεί με πολλά εμπορικά ονόματα (και γενόσημα). Στο νοσοκομείο βοηθά να λέτε τη δραστική ουσία, για να μη δοθεί διπλή δόση.'],
+ ai:['Τεχνητή νοημοσύνη','Φωτογραφίζετε το κουτί και μια δωρεάν υπηρεσία τεχνητής νοημοσύνης διαβάζει το όνομα και συμπληρώνει τι κάνει, τη δραστική ουσία, τις παρενέργειες και τις προφυλάξεις.<br><br>Χρειάζεται δωρεάν κλειδί OpenRouter χωρίς κάρτα, το ίδιο με το Identify-AI. <b>Μπορεί να κάνει λάθη</b> — ελέγχετε με το φύλλο οδηγιών. Ώρες και δόση τις βάζετε εσείς, όπως τις έγραψε ο γιατρός.'],
+ stop:['Διακοπή φαρμάκου','Το φάρμακο δεν σβήνεται. Μεταφέρεται στη λίστα «Διακοπή» με ημερομηνία και λόγο, και στην κάρτα για το νοσοκομείο φαίνονται όσα σταματήσατε τους τελευταίους 3 μήνες.<br><br><b>Μη διακόπτετε φάρμακα χωρίς να ρωτήσετε τον γιατρό.</b>'],
+ allergies:['Αλλεργίες','Ό,τι σας έχει προκαλέσει αντίδραση: εξάνθημα, πρήξιμο, δύσπνοια. Είναι το πρώτο που ρωτάνε στο νοσοκομείο, πριν δώσουν αντιβίωση, αναισθησία ή σκιαγραφικό.<br><br>Γράψτε και <b>τι έπαθες</b>, π.χ. «πενικιλίνη — πρήξιμο προσώπου». Η δυσανεξία (π.χ. στομαχόπονος) δεν είναι αλλεργία, αλλά αξίζει να σημειωθεί.'],
+ card:['Κάρτα για γιατρό','Όλα όσα θα σας ρωτήσουν σε νοσοκομείο ή ιατρείο, σε μία οθόνη: αλλεργίες, ενεργά φάρμακα με ώρες, όσα διακόψατε πρόσφατα, πίεση, επαφή έκτακτης ανάγκης.<br><br>Πατήστε σε οποιοδήποτε πεδίο για να το αλλάξετε. «Μεγάλα γράμματα» για να το δείξετε εύκολα, «Αποστολή» για να το στείλετε με μήνυμα.'],
+ cardmeds:['Ενεργά φάρμακα','Η λίστα ενημερώνεται μόνη της από την καρτέλα «Φάρμακα». Για αλλαγές πηγαίνετε εκεί.'],
+ remind:['Υπενθυμίσεις','Οι ειδοποιήσεις της εφαρμογής βγαίνουν όταν είναι ανοιχτή ή πρόσφατα ανοιγμένη. Για υπενθύμιση που χτυπάει σίγουρα, πατήστε «Προσθήκη στο ημερολόγιο του κινητού»: οι ώρες μπαίνουν στο ημερολόγιο του τηλεφώνου με ειδοποίηση.'],
+ backup:['Αντίγραφα ασφαλείας','Τα δεδομένα είναι μόνο στο κινητό. Αν σβηστεί το ιστορικό του προγράμματος περιήγησης, χάνονται. Το αντίγραφο γράφεται στον κοινό φάκελο αντιγράφων των εφαρμογών σας, μέσα στον υποφάκελο «Fakelos-Ygeias», και γίνεται αυτόματα μετά από κάθε αλλαγή, όταν ο φάκελος έχει επιλεγεί.'],
+ version:['Έκδοση','Η εφαρμογή ελέγχει μόνη της για νέα έκδοση όταν την ανοίγετε και αναβαθμίζεται αυτόματα. Τα δεδομένα σας δεν αλλάζουν.'],
+ appts:['Ραντεβού & εξετάσεις','Γράψτε ραντεβού γιατρών και εξετάσεις. Την ημέρα του ραντεβού βγαίνει ειδοποίηση, και τα επόμενα 14 ημερών φαίνονται στην αρχική οθόνη. Στις σημειώσεις μπορείτε να κρατάτε και αποτελέσματα.']
+};
+document.addEventListener('keydown',e=>{if((e.key==='Enter'||e.key===' ')&&e.target.classList&&e.target.classList.contains('q')){e.preventDefault();helpDlg(e.target.dataset.k)}});
 
 /* ---------- Εκδόσεις & αυτόματη αναβάθμιση ---------- */
 const vcmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<3;i++){const d=(x[i]||0)-(y[i]||0);if(d)return d}return 0};
@@ -732,12 +864,525 @@ async function showNews(v){
  openDlg(`<h2>${v?'Αναβαθμίστηκε στην έκδοση '+esc(APP_VERSION):'Τι νέο'}</h2>${items.length?items.map(c=>`<h3>Έκδοση ${esc(c.version)} <span class="mut">${esc(c.date||'')}</span></h3><ul style="margin:0 0 8px;padding-left:20px">${(c.notes||[]).map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`).join(''):'<p class="mut">Δεν υπάρχουν σημειώσεις.</p>'}<div class="acts"><button type="button" class="pri" data-act="close">Εντάξει</button></div>`,()=>{});
 }
 function afterStart(){
+ if(LOCKED){const iv=setInterval(()=>{if(!LOCKED){clearInterval(iv);afterStart()}},1000);return}
  if(D.settings.pendingNews&&vcmp(APP_VERSION,D.settings.pendingNews)>=0){delete D.settings.pendingNews;persist();setTimeout(()=>showNews(APP_VERSION),400)}
  if(D.settings.seenVersion&&vcmp(APP_VERSION,D.settings.seenVersion)>0&&!$('#dlg').open)setTimeout(()=>{if(!$('#dlg').open)showNews(APP_VERSION)},600);
  D.settings.seenVersion=APP_VERSION;persist();
  setTimeout(()=>checkUpdate(false),2500);
  setInterval(()=>checkUpdate(false),3*3600e3);
 }
+
+/* ================= ΕΚΔΟΣΗ 1.4 — ΝΕΕΣ ΛΕΙΤΟΥΡΓΙΕΣ ================= */
+
+/* ---------- Γενικά βοηθητικά ---------- */
+function thumb(file,M,q){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const k=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q||0.7))};img.onerror=()=>rej(new Error('Η φωτογραφία δεν διαβάστηκε'));img.src=u})}
+function parseDT(d,h){const [y,mo,da]=d.split('-').map(Number),[hh,mi]=(h||'00:00').split(':').map(Number);return new Date(y,mo-1,da,hh,mi)}
+function fmtNum(v){return String(Math.round(v*10)/10).replace('.',',')}
+async function aiJSON(content){if(!getKey())throw Object.assign(new Error('Χρειάζεται δωρεάν κλειδί τεχνητής νοημοσύνης (Περισσότερα → Τεχνητή νοημοσύνη)'),{nokey:true});
+ const models=await freeModels(false);try{return await aiCall(content,models.slice(0,6))}catch(e){if(e.fatal)throw e;return await aiCall(content,(await freeModels(true)).slice(0,6))}}
+function patientInfo(){const p=D.profile,a=ageOf();return[a!=null?'ηλικία '+a:'',p.sex==='m'?'άνδρας':p.sex==='f'?'γυναίκα':'',p.weight?'βάρος '+p.weight+' κιλά':'',p.diabetes?'διαβήτης':'',p.kidney?'νεφρική νόσος':'',p.heart?'καρδιοπάθεια':'',p.smoker?'καπνιστής':'',p.conditions?'παθήσεις: '+p.conditions:'',p.allergies?'αλλεργίες: '+p.allergies:''].filter(Boolean).join('· ')}
+
+/* ---------- Γενικό γράφημα γραμμής ---------- */
+function lineChart(series,refs){
+ const all=series.flatMap(s=>s.pts);if(all.length<2)return '<p class="mut">Χρειάζονται τουλάχιστον 2 μετρήσεις για γράφημα.</p>';
+ const W=340,H=180,L=36,R=8,T=8,B=22;
+ const ts=all.map(p=>+new Date(p.t)),t0=Math.min(...ts),t1=Math.max(...ts),span=Math.max(t1-t0,1);
+ const vs=all.map(p=>p.v).concat((refs||[]).map(r=>r.v));let lo=Math.min(...vs),hi=Math.max(...vs);const pd=(hi-lo)*0.12||1;lo-=pd;hi+=pd;
+ const x=t=>L+(t-t0)/span*(W-L-R),y=v=>T+(hi-v)/(hi-lo)*(H-T-B);
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img">`;
+ for(let i=0;i<=4;i++){const v=lo+(hi-lo)*i/4;s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${fmtNum(v)}</text>`}
+ (refs||[]).forEach(r=>s+=`<line x1="${L}" x2="${W-R}" y1="${y(r.v)}" y2="${y(r.v)}" stroke="${r.c||'var(--mut)'}" stroke-dasharray="4 4"/>`);
+ series.forEach(se=>{const pts=se.pts.slice().sort((a,b)=>a.t<b.t?-1:1);
+  s+=`<polyline fill="none" stroke="${se.c}" stroke-width="2" points="${pts.map(p=>x(+new Date(p.t)).toFixed(1)+','+y(p.v).toFixed(1)).join(' ')}"/>`;
+  if(pts.length<=60)pts.forEach(p=>s+=`<circle cx="${x(+new Date(p.t)).toFixed(1)}" cy="${y(p.v).toFixed(1)}" r="2.8" fill="${se.c}"/>`)});
+ const d0=new Date(t0),d1=new Date(t1);
+ return s+`<text x="${L}" y="${H-5}">${pad(d0.getDate())}/${pad(d0.getMonth()+1)}</text><text x="${W-R}" y="${H-5}" text-anchor="end">${pad(d1.getDate())}/${pad(d1.getMonth()+1)}</text></svg>`;
+}
+function spark(vals,c){if(vals.length<2)return '';const W=70,H=22,lo=Math.min(...vals),hi=Math.max(...vals),r=hi-lo||1;return `<svg width="${W}" height="${H}" viewBox="0 0 ${W} ${H}"><polyline fill="none" stroke="${c||'var(--pri)'}" stroke-width="2" points="${vals.map((v,i)=>(i/(vals.length-1)*(W-4)+2).toFixed(1)+','+(H-2-(v-lo)/r*(H-4)).toFixed(1)).join(' ')}"/></svg>`}
+
+/* ---------- Πολλά άτομα ---------- */
+function savePeople(){try{localStorage.setItem(PKEY,JSON.stringify(PEOPLE))}catch(e){}}
+function personData(p){if(p.id===PEOPLE.cur)return D;try{return fix(JSON.parse(localStorage.getItem(p.key)))}catch(e){return fix({})}}
+function personLabel(p){const d=personData(p);return (d.profile&&d.profile.name)||p.label||'Εγώ'}
+function switchPerson(id){const p=PEOPLE.list.find(x=>x.id===id);if(!p)return;persist();PEOPLE.cur=id;savePeople();KEY=p.key;D=load();render();toast('Άνοιξε ο φάκελος: '+personLabel(p))}
+function addPerson(name){const id='p'+uid(),key='fakelosYgeias_'+id;try{localStorage.setItem(key,JSON.stringify(fix({profile:{name}})))}catch(e){}PEOPLE.list.push({id,key,label:name});savePeople();switchPerson(id)}
+function delPerson(id){const p=PEOPLE.list.find(x=>x.id===id);if(!p||PEOPLE.list.length<2)return;
+ if(!confirm('Να διαγραφεί ο φάκελος «'+personLabel(p)+'» με όλα του τα δεδομένα;')||!confirm('Σίγουρα; Δεν αναιρείται (εκτός από αντίγραφο ασφαλείας).'))return;
+ PEOPLE.list=PEOPLE.list.filter(x=>x.id!==id);try{localStorage.removeItem(p.key)}catch(e){}if(PEOPLE.cur===id){PEOPLE.cur=PEOPLE.list[0].id;KEY=PEOPLE.list[0].key;D=load()}savePeople();$('#dlg').close();render();peopleDlg()}
+function peopleDlg(){
+ openDlg(`<h2>Άτομα ${hq('people')}</h2>
+ ${PEOPLE.list.map(p=>`<div class="dose"><div class="grow"><b>👤 ${esc(personLabel(p))}</b>${p.id===PEOPLE.cur?' <span class="tag">ανοιχτό</span>':''}</div>${p.id!==PEOPLE.cur?`<button type="button" class="small pri" data-act="pswitch" data-id="${p.id}">Άνοιγμα</button>`:''}${PEOPLE.list.length>1?`<button type="button" class="small danger" data-act="pdel" data-id="${p.id}">✕</button>`:''}</div>`).join('')}
+ <label style="margin-top:10px">Προσθήκη νέου ατόμου<input name="nn" placeholder="π.χ. Μητέρα, Γιώργος"></label>
+ <div class="acts"><button type="button" data-act="close">Κλείσιμο</button><button class="pri" type="submit">+ Προσθήκη</button></div>`,
+ fd=>{const n=(fd.get('nn')||'').trim();if(!n){alert('Γράψτε όνομα.');return false}addPerson(n)});
+}
+function eachPerson(fn){PEOPLE.list.forEach(p=>{if(p.id===PEOPLE.cur){fn(D,p,true);return}let x;try{x=fix(JSON.parse(localStorage.getItem(p.key)))}catch(e){return}const keep=D;D=x;let ch=false;try{ch=fn(x,p,false)}finally{D=keep}if(ch){try{localStorage.setItem(p.key,JSON.stringify(x))}catch(e){}}})}
+function allData(){persist();const data={};PEOPLE.list.forEach(p=>{data[p.key]=p.id===PEOPLE.cur?D:JSON.parse(localStorage.getItem(p.key)||'{}')});return{app:'fakelos-ygeias',version:APP_VERSION,saved:new Date().toISOString(),people:PEOPLE,data}}
+
+/* ---------- Κλείδωμα ---------- */
+const LKEY='fakelosYgeias_lock';let LOCKED=false,hiddenAt=0;
+function lockCfg(){try{return JSON.parse(localStorage.getItem(LKEY))||null}catch(e){return null}}
+async function sha(s){const b=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(s));return [...new Uint8Array(b)].map(x=>x.toString(16).padStart(2,'0')).join('')}
+const b64=buf=>btoa(String.fromCharCode(...new Uint8Array(buf))),unb64=s=>Uint8Array.from(atob(s),c=>c.charCodeAt(0));
+function showLock(){const c=lockCfg();if(!c)return;LOCKED=true;['#dlg','#hdlg'].forEach(s=>{const d=$(s);if(d.open)d.close()});
+ const L=$('#lock');L.style.display='flex';$('#lockpin').value='';$('#lockmsg').textContent='';$('#lockbio').style.display=c.bio?'':'none';
+ setTimeout(()=>{if(c.bio)tryBio(true);else $('#lockpin').focus()},300)}
+function unlock(){LOCKED=false;$('#lock').style.display='none';render()}
+async function tryPin(){const c=lockCfg(),v=$('#lockpin').value;if(!c)return unlock();if(await sha(c.salt+v)===c.hash)unlock();else{$('#lockmsg').textContent='Λάθος κωδικός';$('#lockpin').value='';$('#lockpin').focus()}}
+async function tryBio(auto){const c=lockCfg();if(!c||!c.bio)return;try{await navigator.credentials.get({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),allowCredentials:[{type:'public-key',id:unb64(c.bio)}],userVerification:'required',timeout:60000}});unlock()}catch(e){if(!auto)$('#lockmsg').textContent='Δεν έγινε αναγνώριση — βάλτε τον κωδικό.';$('#lockpin').focus()}}
+function lockSetDlg(change){
+ openDlg(`<h2>${change?'Αλλαγή κωδικού':'Ορισμός κωδικού'} ${hq('lock')}</h2>
+ ${change?`<label>Τωρινός κωδικός<input type="password" inputmode="numeric" name="old" required autocomplete="off"></label>`:''}
+ <label>Νέος κωδικός (4–8 ψηφία)<input type="password" inputmode="numeric" name="p1" required pattern="[0-9]{4,8}" autocomplete="off"></label>
+ <label>Ξανά ο νέος κωδικός<input type="password" inputmode="numeric" name="p2" required autocomplete="off"></label>${btns()}`,
+ async fd=>{},);
+ const f=$('#dform');f.onsubmit=async e=>{e.preventDefault();const fd=new FormData(f),c=lockCfg();
+  if(change&&c&&await sha(c.salt+fd.get('old'))!==c.hash){alert('Λάθος τωρινός κωδικός.');return}
+  const p1=fd.get('p1');if(!/^\d{4,8}$/.test(p1)){alert('Ο κωδικός πρέπει να έχει 4 έως 8 ψηφία.');return}if(p1!==fd.get('p2')){alert('Οι δύο κωδικοί δεν ταιριάζουν.');return}
+  const salt=b64(crypto.getRandomValues(new Uint8Array(12)));localStorage.setItem(LKEY,JSON.stringify({salt,hash:await sha(salt+p1),bio:c&&c.bio||''}));$('#dlg').close();render();toast('Ο κωδικός ορίστηκε')};
+}
+async function bioEnroll(){const c=lockCfg();if(!c){alert('Ορίστε πρώτα κωδικό.');return}
+ try{if(!window.PublicKeyCredential||!(await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable())){alert('Η συσκευή δεν υποστηρίζει ξεκλείδωμα με δαχτυλικό ή πρόσωπο από το πρόγραμμα περιήγησης.');return}
+  const cred=await navigator.credentials.create({publicKey:{challenge:crypto.getRandomValues(new Uint8Array(32)),rp:{name:'Φάκελος Υγείας'},user:{id:crypto.getRandomValues(new Uint8Array(16)),name:'fakelos-ygeias',displayName:'Φάκελος Υγείας'},pubKeyCredParams:[{type:'public-key',alg:-7},{type:'public-key',alg:-257}],authenticatorSelection:{authenticatorAttachment:'platform',userVerification:'required',residentKey:'discouraged'},timeout:60000,attestation:'none'}});
+  c.bio=b64(cred.rawId);localStorage.setItem(LKEY,JSON.stringify(c));render();toast('Ενεργοποιήθηκε το ξεκλείδωμα με δαχτυλικό/πρόσωπο')}catch(e){toast('Δεν ενεργοποιήθηκε')}}
+async function lockRemove(){const c=lockCfg();if(!c)return;const v=prompt('Βάλτε τον κωδικό για να καταργηθεί το κλείδωμα:');if(v==null)return;if(await sha(c.salt+v)!==c.hash){alert('Λάθος κωδικός.');return}localStorage.removeItem(LKEY);render();toast('Το κλείδωμα καταργήθηκε')}
+function lockForgot(){if(!confirm('Αν ξεχάσατε τον κωδικό, ο μόνος τρόπος είναι να σβηστούν τα δεδομένα από αυτή τη συσκευή και να γίνει επαναφορά από αντίγραφο ασφαλείας.\n\nΝα σβηστούν τώρα;'))return;if(!confirm('Σίγουρα; Θα σβηστούν όλοι οι φάκελοι αυτής της συσκευής.'))return;
+ PEOPLE.list.forEach(p=>{try{localStorage.removeItem(p.key)}catch(e){}});['fakelosYgeias',PKEY,LKEY].forEach(k=>{try{localStorage.removeItem(k)}catch(e){}});location.reload()}
+function lockCard(){const c=lockCfg();return `<div class="card"><h2>🔒 Κλείδωμα εφαρμογής ${hq('lock')}</h2>
+ <div>${c?'<b style="color:var(--green)">Ενεργό</b> — ζητά κωδικό όταν ανοίγει η εφαρμογή'+(c.bio?' · με δαχτυλικό/πρόσωπο':''):'Ανενεργό — όποιος πιάσει το κινητό βλέπει τα δεδομένα'}</div>
+ <div class="row" style="margin-top:8px">${c?`<button data-act="lockchange">Αλλαγή κωδικού</button>${c.bio?'':'<button data-act="lockbio">👆 Δαχτυλικό / πρόσωπο</button>'}<button class="danger" data-act="lockoff">Κατάργηση</button>`:'<button class="pri" data-act="lockset">Ορισμός κωδικού</button>'}</div></div>`}
+
+/* ---------- Άλλες μετρήσεις ---------- */
+const VT={
+ glu:{n:'Σάκχαρο',u:'mg/dL',ic:'🩸',min:20,max:700,step:1,ctx:['νηστεία','πριν το φαγητό','2 ώρες μετά το φαγητό','τυχαία'],
+  cls:(v,c)=>{const dia=D.profile.diabetes,post=c==='2 ώρες μετά το φαγητό'||c==='τυχαία';
+   if(v<54)return{t:'Πολύ χαμηλό',c:'var(--red)',warn:'Πολύ χαμηλό σάκχαρο (υπογλυκαιμία). Πάρτε αμέσως 15 γραμμάρια ζάχαρη (π.χ. μισό ποτήρι χυμό ή 3–4 κουταλάκια ζάχαρη σε νερό) και ξαναμετρήστε σε 15 λεπτά. Αν δεν συνέρχεστε, καλέστε το 166.'};
+   if(v<70)return{t:'Χαμηλό',c:'var(--blue)',warn:'Χαμηλό σάκχαρο. Πάρτε 15 γραμμάρια ζάχαρη (π.χ. μισό ποτήρι χυμό) και ξαναμετρήστε σε 15 λεπτά.'};
+   if(v>=300)return{t:'Πολύ υψηλό',c:'var(--red)',warn:'Πολύ υψηλό σάκχαρο. Πιείτε νερό και επικοινωνήστε με τον γιατρό σας, ειδικά αν έχετε έντονη δίψα, εμετό, κοιλιακό πόνο ή υπνηλία.'};
+   if(dia){if(post)return v<180?{t:'Στον στόχο',c:'var(--green)'}:v<250?{t:'Πάνω από τον στόχο',c:'var(--yellow)'}:{t:'Υψηλό',c:'var(--orange)'};return v<=130?{t:'Στον στόχο',c:'var(--green)'}:v<=180?{t:'Πάνω από τον στόχο',c:'var(--yellow)'}:{t:'Υψηλό',c:'var(--orange)'}}
+   if(post)return v<140?{t:'Φυσιολογικό',c:'var(--green)'}:v<200?{t:'Αυξημένο',c:'var(--yellow)'}:{t:'Υψηλό',c:'var(--orange)'};
+   return v<100?{t:'Φυσιολογικό',c:'var(--green)'}:v<126?{t:'Αυξημένο (προδιαβήτης)',c:'var(--yellow)'}:{t:'Υψηλό',c:'var(--orange)'}}},
+ wt:{n:'Βάρος',u:'κιλά',ic:'⚖️',min:20,max:300,step:0.1,
+  cls:v=>{const h=+D.profile.height;if(!h)return{t:'',c:'var(--pri)'};const b=v/((h/100)**2);return b<18.5?{t:'Λιποβαρής (ΔΜΣ '+fmtNum(b)+')',c:'var(--blue)'}:b<25?{t:'Φυσιολογικό (ΔΜΣ '+fmtNum(b)+')',c:'var(--green)'}:b<30?{t:'Υπέρβαρος (ΔΜΣ '+fmtNum(b)+')',c:'var(--orange)'}:{t:'Παχυσαρκία (ΔΜΣ '+fmtNum(b)+')',c:'var(--red)'}}},
+ temp:{n:'Θερμοκρασία',u:'°C',ic:'🌡️',min:30,max:44,step:0.1,
+  cls:v=>v<35?{t:'Υποθερμία',c:'var(--blue)',warn:'Θερμοκρασία κάτω από 35 °C. Ζεσταθείτε και επικοινωνήστε με γιατρό.'}:v<37.5?{t:'Φυσιολογική',c:'var(--green)'}:v<38?{t:'Δέκατα',c:'var(--yellow)'}:v<39.5?{t:'Πυρετός',c:'var(--orange)'}:{t:'Υψηλός πυρετός',c:'var(--red)',warn:'Υψηλός πυρετός. Αν ξεπερνά τους 40 °C, κρατά πάνω από 3 μέρες ή υπάρχει δυσκαμψία στον αυχένα, σύγχυση, δύσπνοια ή εξάνθημα, επικοινωνήστε αμέσως με γιατρό ή καλέστε το 166.'}},
+ spo2:{n:'Οξυγόνο',u:'%',ic:'🫁',min:50,max:100,step:1,
+  cls:v=>v>=95?{t:'Φυσιολογικό',c:'var(--green)'}:v>=92?{t:'Χαμηλό',c:'var(--yellow)'}:{t:'Πολύ χαμηλό',c:'var(--red)',warn:'Οξυγόνο κάτω από 92%. Ξαναμετρήστε με ζεστά χέρια χωρίς βερνίκι. Αν επιμένει, επικοινωνήστε με γιατρό. Κάτω από 88% ή με δύσπνοια καλέστε το 166.'}},
+ waist:{n:'Περίμετρος μέσης',u:'εκ.',ic:'📏',min:40,max:220,step:0.5,
+  cls:v=>{const f=D.profile.sex==='f',a=f?80:94,b=f?88:102;return v<a?{t:'Φυσιολογική',c:'var(--green)'}:v<b?{t:'Αυξημένος κίνδυνος',c:'var(--yellow)'}:{t:'Υψηλός κίνδυνος',c:'var(--orange)'}}}
+};
+const MVIEWS=[['bp','❤️ Πίεση'],['glu','🩸 Σάκχαρο'],['wt','⚖️ Βάρος'],['temp','🌡️ Θερμοκρασία'],['spo2','🫁 Οξυγόνο'],['waist','📏 Μέση'],['labs','🧪 Εξετάσεις']];
+function vitalsOf(type){const P=+D.settings.period,lim=P?Date.now()-P*864e5:0;return D.vitals.filter(r=>r.type===type&&+new Date(r.t)>=lim).sort((a,b)=>a.t<b.t?1:-1)}
+function vitalForm(type,r){
+ const V=VT[type];r=r||{};const t=r.t?new Date(r.t):new Date();
+ openDlg(`<h2>${V.ic} ${r.id?'Επεξεργασία':'Νέα μέτρηση'}: ${V.n} ${hq(type)}</h2>
+ <label>${V.n} (${V.u})<input type="number" inputmode="decimal" name="v" step="${V.step}" min="${V.min}" max="${V.max}" required value="${r.v??''}" autofocus></label>
+ ${V.ctx?`<label>Πότε μετρήθηκε<select name="ctx">${V.ctx.map(c=>`<option ${r.ctx===c?'selected':''}>${c}</option>`).join('')}</select></label>`:''}
+ <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${dkey(t)}"></label><label>Ώρα<input type="time" name="h" required value="${hm(t)}"></label></div>
+ <label>Σημείωση<textarea name="note">${esc(r.note||'')}</textarea></label>
+ ${btns(r.id?`<button type="button" class="danger" data-act="delvital" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const v=+String(fd.get('v')).replace(',','.');if(!v){alert('Βάλτε τιμή.');return false}
+  const o={id:r.id||uid(),type,t:parseDT(fd.get('d'),fd.get('h')).toISOString(),v,ctx:fd.get('ctx')||'',note:(fd.get('note')||'').trim()};
+  const i=D.vitals.findIndex(x=>x.id===o.id);if(i>=0)D.vitals[i]=o;else D.vitals.push(o);
+  if(type==='wt'){const latest=D.vitals.filter(x=>x.type==='wt').sort((a,b)=>a.t<b.t?1:-1)[0];if(latest)D.profile.weight=latest.v}
+  save();render();const c=V.cls(v,o.ctx);if(c.warn)setTimeout(()=>alert(c.warn),200);else toast('Αποθηκεύτηκε'+(c.t?' · '+c.t:''));
+ });
+}
+function rVital(type){
+ const V=VT[type],list=vitalsOf(type),P=+D.settings.period;
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">${V.ic} ${V.n} ${hq(type)}</h2><button class="pri" data-act="addvital" data-t="${type}">+ Νέα μέτρηση</button></div>
+ <div class="chips" style="margin-top:10px">${[[7,'7 ημέρες'],[30,'30 ημέρες'],[90,'3 μήνες'],[0,'Όλες']].map(([v,t])=>`<button class="chip ${P===v?'on':''}" data-act="period" data-v="${v}">${t}</button>`).join('')}</div></div>`;
+ if(!list.length)return h+`<div class="card"><p class="mut">Δεν υπάρχουν μετρήσεις σε αυτό το διάστημα.</p></div>`;
+ const last=list[0],c=V.cls(last.v,last.ctx),vals=list.map(r=>r.v),avg=vals.reduce((a,b)=>a+b,0)/vals.length;
+ h+=`<div class="card"><div class="mut">Τελευταία</div><div class="row"><span class="pill" style="background:${c.c}"></span><span class="big">${fmtNum(last.v)}</span><span class="mut">${V.u}</span></div><div class="mut">${c.t}${last.ctx?' · '+esc(last.ctx):''} · ${fmtS(new Date(last.t))} ${hm(new Date(last.t))}</div>
+ <div class="g3" style="margin-top:10px"><div><div class="mut">Μέσος όρος</div><b>${fmtNum(avg)}</b></div><div><div class="mut">Ελάχιστο</div><b>${fmtNum(Math.min(...vals))}</b></div><div><div class="mut">Μέγιστο</div><b>${fmtNum(Math.max(...vals))}</b></div></div>`;
+ if(type==='wt'){const b=body();if(b)h+=`<div class="mut" style="margin-top:6px">Υγιές βάρος για το ύψος σας: <b>${b.min}–${b.max} κιλά</b>${list.length>1?' · αλλαγή στο διάστημα: <b>'+(last.v-list[list.length-1].v>0?'+':'')+fmtNum(last.v-list[list.length-1].v)+' κιλά</b>':''}</div>`}
+ if(type==='glu'){const ctxs=V.ctx.map(cx=>{const l=list.filter(r=>r.ctx===cx);return l.length?`<tr><td>${cx}</td><td>${l.length}</td><td>${fmtNum(l.reduce((a,r)=>a+r.v,0)/l.length)}</td></tr>`:''}).join('');if(ctxs)h+=`<table style="margin-top:8px"><tr><th>Πότε</th><th>Μετρ.</th><th>Μ.Ο.</th></tr>${ctxs}</table>`}
+ h+=`</div>`;
+ const refs={glu:[{v:D.profile.diabetes?130:100,c:'var(--mut)'},{v:70,c:'var(--blue)'}],temp:[{v:37.5}],spo2:[{v:95}],waist:[{v:D.profile.sex==='f'?80:94}],wt:body()?[{v:body().max}]:[]}[type];
+ h+=`<div class="card"><h2>Γράφημα</h2>${lineChart([{pts:list,c:'var(--pri)'}],refs)}</div>`;
+ h+=`<div class="card"><h2>Μετρήσεις</h2>${list.map(r=>{const d=new Date(r.t),k=V.cls(r.v,r.ctx);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><span class="pill" style="background:${k.c}"></span><b>${fmtNum(r.v)} ${V.u}</b><div class="mut">${k.t}${r.ctx?' · '+esc(r.ctx):''}</div>${r.note?`<div class="mut">${esc(r.note)}</div>`:''}</div><button class="small" data-act="editvital" data-id="${r.id}">✎</button></div>`}).join('')}</div>`;
+ return h;
+}
+
+/* ---------- Εξετάσεις αίματος ---------- */
+const LABS=[
+ {n:'Γλυκόζη',re:/γλυκ[οό]ζη|σ[αά]κχαρ|glu/i,u:'mg/dL',lo:70,hi:100,t:'Το σάκχαρο στο αίμα νηστείας. 100–125 σημαίνει προδιαβήτη, 126 και πάνω σε δύο μετρήσεις σημαίνει διαβήτη.'},
+ {n:'Γλυκοζυλιωμένη αιμοσφαιρίνη (HbA1c)',re:/hba1c|a1c|γλυκοζυλιωμ/i,u:'%',lo:4,hi:5.7,t:'Ο μέσος όρος σακχάρου των τελευταίων 3 μηνών. 5,7–6,4% προδιαβήτης, 6,5% και πάνω διαβήτης. Σε διαβητικούς ο στόχος είναι συνήθως κάτω από 7%.'},
+ {n:'LDL χοληστερίνη',re:/ldl|κακή/i,u:'mg/dL',hi:130,t:'Η «κακή» χοληστερίνη, που φράζει τις αρτηρίες. Ο στόχος εξαρτάται από τον κίνδυνό σας: κάτω από 116 για χαμηλό, κάτω από 100 για μέτριο, κάτω από 70 για υψηλό και κάτω από 55 για πολύ υψηλό κίνδυνο (π.χ. μετά από έμφραγμα ή με διαβήτη και βλάβη οργάνων).'},
+ {n:'HDL χοληστερίνη',re:/hdl|καλή/i,u:'mg/dL',lo:40,t:'Η «καλή» χοληστερίνη, που καθαρίζει τις αρτηρίες. Καλό είναι πάνω από 40 στους άνδρες και πάνω από 50 στις γυναίκες. Ανεβαίνει με την άσκηση.'},
+ {n:'Ολική χοληστερίνη',re:/χοληστερ/i,u:'mg/dL',hi:200,t:'Το σύνολο της χοληστερίνης. Επιθυμητό κάτω από 200. Πιο σημαντικό είναι όμως το LDL.'},
+ {n:'Τριγλυκερίδια',re:/τριγλυκ/i,u:'mg/dL',hi:150,t:'Λίπη στο αίμα. Ανεβαίνουν με ζάχαρη, αλκοόλ, παχυσαρκία και αρρύθμιστο διαβήτη. Επιθυμητά κάτω από 150.'},
+ {n:'Κρεατινίνη',re:/κρεατιν/i,u:'mg/dL',lo:0.6,hi:1.3,t:'Δείχνει πόσο καλά καθαρίζουν οι νεφροί. Όσο πιο ψηλή, τόσο πιο αργά δουλεύουν. Είναι σημαντική για τη δόση πολλών φαρμάκων (π.χ. μετφορμίνη, φάρμακα πίεσης).'},
+ {n:'Ρυθμός σπειραματικής διήθησης (eGFR)',re:/egfr|σπειραμ/i,u:'mL/min',lo:60,t:'Πόσο αίμα φιλτράρουν οι νεφροί το λεπτό. Πάνω από 90 άριστα, 60–89 ήπια μείωση. Κάτω από 60 για πάνω από 3 μήνες σημαίνει χρόνια νεφρική νόσο.'},
+ {n:'Ουρία',re:/ουρ[ιί]α/i,u:'mg/dL',lo:15,hi:45,t:'Άχρηστη ουσία που αποβάλλουν οι νεφροί. Ανεβαίνει με αφυδάτωση, πολλή πρωτεΐνη ή νεφρικό πρόβλημα.'},
+ {n:'Ουρικό οξύ',re:/ουρικ/i,u:'mg/dL',hi:7,t:'Όταν είναι ψηλό μπορεί να προκαλέσει ουρική αρθρίτιδα. Ορισμένα διουρητικά το ανεβάζουν.'},
+ {n:'Κάλιο',re:/κ[αά]λιο|^k\+?$/i,u:'mmol/L',lo:3.5,hi:5.1,t:'Πολύ σημαντικό για τον ρυθμό της καρδιάς. Ορισμένα φάρμακα πίεσης το ανεβάζουν (αναστολείς ΜΕΑ, σαρτάνες, σπιρονολακτόνη) και άλλα το ρίχνουν (διουρητικά). Τιμές εκτός ορίων θέλουν επικοινωνία με τον γιατρό.'},
+ {n:'Νάτριο',re:/ν[αά]τριο|^na\+?$/i,u:'mmol/L',lo:135,hi:145,t:'Όταν είναι χαμηλό μπορεί να προκαλέσει ζάλη, αδυναμία και σύγχυση. Στις μεγάλες ηλικίες οφείλεται συχνά σε διουρητικά.'},
+ {n:'Αιμοσφαιρίνη',re:/αιμοσφαιρ|hgb|^hb$/i,u:'g/dL',lo:12,hi:17,t:'Μεταφέρει το οξυγόνο στο σώμα. Όταν είναι χαμηλή έχουμε αναιμία (κούραση, δύσπνοια, χλωμάδα). Φυσιολογικά: άνδρες 13–17, γυναίκες 12–15,5.'},
+ {n:'Αιματοκρίτης',re:/αιματοκρ|hct/i,u:'%',lo:36,hi:50,t:'Το ποσοστό του αίματος που είναι ερυθρά αιμοσφαίρια. Πάει μαζί με την αιμοσφαιρίνη.'},
+ {n:'Λευκά αιμοσφαίρια',re:/λευκά|λευκα αιμ|wbc/i,u:'χιλ./μL',lo:4,hi:10.5,t:'Τα κύτταρα άμυνας του οργανισμού. Ανεβαίνουν σε λοιμώξεις και φλεγμονές.'},
+ {n:'Αιμοπετάλια',re:/αιμοπετ|plt/i,u:'χιλ./μL',lo:150,hi:400,t:'Βοηθούν στην πήξη του αίματος. Σημαντικά αν παίρνετε αντιπηκτικά ή ασπιρίνη.'},
+ {n:'Φερριτίνη',re:/φερ+ιτ/i,u:'ng/mL',lo:30,hi:300,t:'Οι «αποθήκες» σιδήρου του σώματος. Όταν είναι χαμηλή, υπάρχει έλλειψη σιδήρου.'},
+ {n:'Σίδηρος',re:/σ[ιί]δηρ/i,u:'μg/dL',lo:60,hi:170,t:'Ο σίδηρος στο αίμα. Για τις αποθήκες σιδήρου πιο αξιόπιστη είναι η φερριτίνη.'},
+ {n:'Βιταμίνη D',re:/βιταμ[ιί]νη d|vit.*d|25.?oh/i,u:'ng/mL',lo:30,hi:100,t:'Σημαντική για τα οστά και τους μύες. Κάτω από 20 θεωρείται έλλειψη.'},
+ {n:'Βιταμίνη B12',re:/b12|β12/i,u:'pg/mL',lo:200,hi:900,t:'Σημαντική για τα νεύρα και το αίμα. Η μετφορμίνη και τα φάρμακα για το στομάχι, όταν παίρνονται για χρόνια, μπορεί να τη ρίξουν.'},
+ {n:'Θυρεοειδοτρόπος ορμόνη (TSH)',re:/tsh|θυρεοειδοτρ/i,u:'μIU/mL',lo:0.4,hi:4,t:'Ρυθμίζει τον θυρεοειδή. Ψηλή TSH σημαίνει υποθυρεοειδισμό (αργός θυρεοειδής), χαμηλή σημαίνει υπερθυρεοειδισμό.'},
+ {n:'Τρανσαμινάση SGOT (AST)',re:/sgot|\bast\b/i,u:'U/L',hi:40,t:'Ένζυμο του ήπατος και των μυών. Ανεβαίνει σε βλάβη του ήπατος ή μετά από έντονη άσκηση.'},
+ {n:'Τρανσαμινάση SGPT (ALT)',re:/sgpt|\balt\b/i,u:'U/L',hi:41,t:'Πιο ειδικό ένζυμο για το ήπαρ. Ανεβαίνει σε λιπώδες ήπαρ, με αλκοόλ και με ορισμένα φάρμακα.'},
+ {n:'γ-GT',re:/γ.?gt|ggt|γ[αά]μμα/i,u:'U/L',hi:55,t:'Ένζυμο του ήπατος και των χοληφόρων. Ανεβαίνει ιδιαίτερα με το αλκοόλ.'},
+ {n:'CRP',re:/crp|c.?αντιδρ/i,u:'mg/L',hi:5,t:'Δείκτης φλεγμονής ή λοίμωξης στο σώμα.'},
+ {n:'INR',re:/inr/i,lo:0.8,hi:1.2,t:'Δείχνει πόσο γρήγορα πήζει το αίμα. Όσοι παίρνουν αντιπηκτικό τύπου ασενοκουμαρόλης ή βαρφαρίνης έχουν συνήθως στόχο 2–3.'},
+ {n:'PSA',re:/psa/i,u:'ng/mL',hi:4,t:'Δείκτης του προστάτη. Ερμηνεύεται από τον ουρολόγο ανάλογα με την ηλικία και την πορεία του.'}
+];
+const labInfo=n=>LABS.find(x=>x.re.test(n||''));
+function labFlag(r){const lo=r.lo!==''&&r.lo!=null?+r.lo:null,hi=r.hi!==''&&r.hi!=null?+r.hi:null;if(hi!=null&&r.v>hi)return{s:'↑',c:'var(--red)',t:'πάνω από το φυσιολογικό'};if(lo!=null&&r.v<lo)return{s:'↓',c:'var(--blue)',t:'κάτω από το φυσιολογικό'};if(lo==null&&hi==null)return{s:'',c:'var(--mut)',t:''};return{s:'✓',c:'var(--green)',t:'φυσιολογικό'}}
+function labGroups(){const g={};D.labs.forEach(r=>{(g[r.name]=g[r.name]||[]).push(r)});Object.values(g).forEach(l=>l.sort((a,b)=>a.d<b.d?1:-1));return Object.entries(g).sort((a,b)=>a[1][0].d<b[1][0].d?1:a[1][0].d>b[1][0].d?-1:a[0].localeCompare(b[0],'el'))}
+function rLabs(){
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">🧪 Εξετάσεις αίματος ${hq('labs')}</h2></div>
+ <div class="row" style="margin-top:10px"><button class="pri grow" data-act="labphoto">📷 Φωτογραφία εξετάσεων</button><button class="grow" data-act="addlab">+ Χειροκίνητα</button></div>
+ <div class="mut" style="margin-top:6px">Η τεχνητή νοημοσύνη διαβάζει το χαρτί των εξετάσεων και περνάει τις τιμές.</div></div>`;
+ const g=labGroups();
+ if(!g.length)return h+`<div class="card"><p class="mut">Δεν έχουν καταχωριστεί εξετάσεις.</p></div>`;
+ const flagged=g.filter(([n,l])=>labFlag(l[0]).s==='↑'||labFlag(l[0]).s==='↓');
+ if(flagged.length)h+=`<div class="card warn"><h2>Εκτός ορίων στην τελευταία μέτρηση</h2>${flagged.map(([n,l])=>{const f=labFlag(l[0]);return `<div class="edf" data-act="labdetail" data-n="${esc(n)}"><b style="color:${f.c}">${f.s} ${esc(n)}</b>: ${fmtNum(l[0].v)} ${esc(l[0].u||'')} <span class="mut">(${fmtS(fromKey(l[0].d))})</span></div>`}).join('')}<div class="mut" style="margin-top:6px">Συζητήστε τα με τον γιατρό σας.</div></div>`;
+ h+=`<div class="card"><h2>Όλες οι εξετάσεις</h2>${g.map(([n,l])=>{const r=l[0],f=labFlag(r),vals=l.slice(0,10).reverse().map(x=>x.v);return `<div class="dose edf" data-act="labdetail" data-n="${esc(n)}"><div class="grow"><b>${esc(n)}</b><div class="mut">${fmtS(fromKey(r.d))}${l.length>1?' · '+l.length+' μετρήσεις':''}${r.lo!==''&&r.lo!=null||r.hi!==''&&r.hi!=null?' · όρια '+(r.lo??'')+'–'+(r.hi??''):''}</div></div>${spark(vals,f.c)}<div style="text-align:right;min-width:74px"><b style="color:${f.c}">${f.s} ${fmtNum(r.v)}</b><div class="mut" style="font-size:12px">${esc(r.u||'')}</div></div></div>`}).join('')}</div>`;
+ return h;
+}
+function labDetail(name){
+ const l=D.labs.filter(r=>r.name===name).sort((a,b)=>a.d<b.d?1:-1),info=labInfo(name),r0=l[0];
+ openDlg(`<h2>🧪 ${esc(name)}</h2>
+ ${info?`<div style="margin-bottom:8px">${info.t}</div>`:''}
+ ${l.length>1?lineChart([{pts:l.map(r=>({t:fromKey(r.d).toISOString(),v:r.v})),c:'var(--pri)'}],[r0.hi!==''&&r0.hi!=null?{v:+r0.hi,c:'var(--red)'}:null,r0.lo!==''&&r0.lo!=null?{v:+r0.lo,c:'var(--blue)'}:null].filter(Boolean)):''}
+ <table><tr><th>Ημερομηνία</th><th>Τιμή</th><th>Όρια</th><th></th></tr>${l.map(r=>{const f=labFlag(r);return `<tr><td>${fmtS(fromKey(r.d))}</td><td><b style="color:${f.c}">${f.s} ${fmtNum(r.v)}</b> ${esc(r.u||'')}</td><td class="mut">${r.lo??''}–${r.hi??''}</td><td><button type="button" class="small" data-act="editlab" data-id="${r.id}">✎</button></td></tr>`}).join('')}</table>
+ <div id="labai" class="mut" style="margin-top:8px"></div>
+ <div class="acts"><button type="button" data-act="labexplain" data-n="${esc(name)}">🤖 Εξήγηση για μένα</button><button type="button" class="pri" data-act="close">Κλείσιμο</button></div>`,()=>{});
+}
+async function labExplain(name){
+ const el=$('#labai'),l=D.labs.filter(r=>r.name===name).sort((a,b)=>a.d<b.d?-1:1);el.innerHTML='⏳ Η τεχνητή νοημοσύνη ετοιμάζει εξήγηση…';
+ try{const r=await aiJSON([{type:'text',text:`Είσαι γιατρός που εξηγεί απλά σε ασθενή, στα ελληνικά. Εξέταση: ${name}. Τιμές με τη σειρά (ημερομηνία: τιμή μονάδα, όρια): ${l.map(x=>x.d+': '+x.v+' '+(x.u||'')+' ('+(x.lo??'')+'–'+(x.hi??'')+')').join('; ')}. Στοιχεία ασθενή: ${patientInfo()}. Φάρμακα: ${D.meds.filter(m=>m.active).map(m=>m.name+(m.substance?' ('+m.substance+')':'')).join(', ')||'κανένα'}.
+Απάντησε ΜΟΝΟ JSON: {"text":"4-6 απλές προτάσεις: τι δείχνει η εξέταση, τι σημαίνει η τιμή και η πορεία της για αυτόν τον ασθενή, αν κάποιο φάρμακο του μπορεί να την επηρεάζει, και τι να συζητήσει με τον γιατρό. Χωρίς διάγνωση, χωρίς αλλαγή φαρμάκων."}`}]);
+  el.innerHTML=`<div class="aibox" style="color:var(--tx)">🤖 ${esc(r.text||'')}<div class="mut" style="font-size:12px;margin-top:6px">Ενημερωτικό — δεν αντικαθιστά τον γιατρό.</div></div>`}catch(e){el.textContent='✕ '+e.message}
+}
+function labForm(r){
+ r=r||{};const n=!r.id;
+ openDlg(`<h2>${n?'Νέα εξέταση':'Επεξεργασία εξέτασης'} ${hq('labs')}</h2>
+ <label>Εξέταση<input name="name" list="labnames" required value="${esc(r.name||'')}" placeholder="π.χ. Γλυκόζη"></label><datalist id="labnames">${LABS.map(x=>`<option value="${esc(x.n)}">`).join('')}${[...new Set(D.labs.map(x=>x.name))].map(x=>`<option value="${esc(x)}">`).join('')}</datalist>
+ <div class="g2"><label>Τιμή<input name="v" inputmode="decimal" required value="${r.v??''}"></label><label>Μονάδα<input name="u" value="${esc(r.u||'')}"></label></div>
+ <div class="g2"><label>Κατώτερο όριο<input name="lo" inputmode="decimal" value="${r.lo??''}"></label><label>Ανώτερο όριο<input name="hi" inputmode="decimal" value="${r.hi??''}"></label></div>
+ <label>Ημερομηνία<input type="date" name="d" required value="${r.d||dkey(new Date())}"></label>
+ ${btns(!n?`<button type="button" class="danger" data-act="dellab" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const num=x=>{x=String(x||'').replace(',','.').trim();return x===''?'':+x};const name=fd.get('name').trim(),info=labInfo(name);
+  const o={id:r.id||uid(),name,v:num(fd.get('v')),u:fd.get('u').trim()||(info&&info.u)||'',lo:num(fd.get('lo')),hi:num(fd.get('hi')),d:fd.get('d')};
+  if(o.v===''||isNaN(o.v)){alert('Βάλτε αριθμητική τιμή.');return false}
+  if(o.lo===''&&o.hi===''&&info){o.lo=info.lo??'';o.hi=info.hi??''}
+  const i=D.labs.findIndex(x=>x.id===o.id);if(i>=0)D.labs[i]=o;else D.labs.push(o);save();render();toast('Αποθηκεύτηκε')});
+}
+async function labRun(file){
+ openDlg(`<h2>🧪 Εξετάσεις από φωτογραφία</h2><div id="labst">⏳ Ετοιμασία φωτογραφίας…</div><div class="acts"><button type="button" data-act="close">Άκυρο</button></div>`,()=>{});
+ const st=()=>$('#labst');
+ try{const url=await shrink(file);if(st())st().textContent='⏳ Η τεχνητή νοημοσύνη διαβάζει τις εξετάσεις… (μπορεί να πάρει λίγο)';
+  const r=await aiJSON([{type:'text',text:`Διάβασε αυτό το φύλλο εξετάσεων αίματος (ελληνικό εργαστήριο). Απάντησε ΜΟΝΟ JSON:
+{"date":"YYYY-MM-DD ημερομηνία αιμοληψίας ή κενό","results":[{"name":"όνομα εξέτασης","value":αριθμός,"unit":"μονάδα","low":αριθμός ή null,"high":αριθμός ή null}]}
+Χρησιμοποίησε ΑΚΡΙΒΩΣ αυτά τα ονόματα όταν ταιριάζουν: ${LABS.map(x=>x.n).join(' | ')}. Για τις υπόλοιπες γράψε το ελληνικό όνομα όπως στο χαρτί. Βάλε μόνο αριθμητικές τιμές (τελεία για δεκαδικά). Μην επινοείς τιμές.`},{type:'image_url',image_url:{url}}]);
+  const res=(r.results||[]).filter(x=>x&&x.name&&x.value!=null&&!isNaN(+x.value));
+  if(!res.length){if(st())st().textContent='✕ Δεν διαβάστηκαν τιμές. Τραβήξτε τη σελίδα ίσια, ολόκληρη και με καλό φως.';return}
+  const f=$('#dform');if(!f)return;
+  f.innerHTML=`<h2>🧪 Βρέθηκαν ${res.length} τιμές</h2><div class="mut">Ελέγξτε και ξετσεκάρετε ό,τι δεν θέλετε.</div>
+  <label>Ημερομηνία εξετάσεων<input type="date" name="d" required value="${/^\d{4}-\d\d-\d\d$/.test(r.date||'')?r.date:dkey(new Date())}"></label>
+  <table><tr><th></th><th>Εξέταση</th><th>Τιμή</th><th>Όρια</th></tr>${res.map((x,i)=>{const f=labFlag({v:+x.value,lo:x.low,hi:x.high});return `<tr><td><input type="checkbox" name="k" value="${i}" checked style="width:auto;min-height:0"></td><td>${esc(x.name)}</td><td><b style="color:${f.c}">${f.s} ${fmtNum(+x.value)}</b> <span class="mut">${esc(x.unit||'')}</span></td><td class="mut">${x.low??''}–${x.high??''}</td></tr>`}).join('')}</table>
+  <div class="mut" style="font-size:12px;margin-top:6px">🤖 Μπορεί να υπάρχουν λάθη ανάγνωσης — συγκρίνετε με το χαρτί.</div>${btns()}`;
+  f.onsubmit=e=>{e.preventDefault();const fd=new FormData(f),d=fd.get('d');fd.getAll('k').map(Number).forEach(i=>{const x=res[i],info=labInfo(x.name);D.labs.push({id:uid(),name:x.name,v:+x.value,u:x.unit||(info&&info.u)||'',lo:x.low??(info&&info.lo)??'',hi:x.high??(info&&info.hi)??'',d})});save();$('#dlg').close();D.settings.mview='labs';render();toast('Αποθηκεύτηκαν')};
+ }catch(e){if(st())st().innerHTML='✕ '+esc(e.message)}
+}
+
+/* ---------- Συμπτώματα ---------- */
+const SYMS2=['ζάλη','πονοκέφαλος','κούραση','ταχυκαρδία','πόνος στο στήθος','δύσπνοια','ναυτία','βήχας','πρήξιμο στα πόδια','αϋπνία','άγχος','πόνος στις αρθρώσεις','εξάνθημα','στομαχόπονος','θολή όραση','μυϊκοί πόνοι'];
+function symCtx(s){const t=new Date(s.t),out=[];
+ Object.entries(D.doses).forEach(([k,r])=>{if(r.s!=='taken')return;const [d,id]=k.split('|');if(d!==dkey(t)&&d!==dkey(new Date(+t-864e5)))return;const m=D.meds.find(x=>x.id===id);if(!m||!r.at)return;const at=parseDT(d,r.at),mn=(t-at)/60000;if(mn>=0&&mn<=240)out.push(`${m.name} πριν ${mn<60?Math.round(mn)+' λεπτά':fmtNum(mn/60)+' ώρες'}`)});
+ const bp=D.bp.map(r=>({r,dt:Math.abs(new Date(r.t)-t)})).filter(x=>x.dt<=120*60000).sort((a,b)=>a.dt-b.dt)[0];
+ return {meds:out,bp:bp?bp.r:null}}
+function symForm(r){
+ r=r||{};const t=r.t?new Date(r.t):new Date();
+ openDlg(`<h2>${r.id?'Επεξεργασία συμπτώματος':'Νέο σύμπτωμα'} ${hq('symptoms')}</h2>
+ <div class="chips" style="margin-bottom:8px">${SYMS2.map(s=>`<button type="button" class="chip" data-act="symchip" data-v="${s}">${s}</button>`).join('')}</div>
+ <label>Τι νιώθετε<input name="what" required value="${esc(r.what||'')}" placeholder="π.χ. ζάλη όταν σηκώνομαι"></label>
+ <label>Ένταση: <b id="sevv">${r.sev||3}</b> από 5<input type="range" name="sev" min="1" max="5" value="${r.sev||3}" oninput="document.getElementById('sevv').textContent=this.value" style="padding:0"></label>
+ <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${dkey(t)}"></label><label>Ώρα<input type="time" name="h" required value="${hm(t)}"></label></div>
+ <label>Διάρκεια<input name="dur" value="${esc(r.dur||'')}" placeholder="π.χ. 10 λεπτά, όλη μέρα"></label>
+ <label>Σημείωση<textarea name="note" placeholder="τι κάνατε εκείνη την ώρα, τι βοήθησε">${esc(r.note||'')}</textarea></label>
+ ${btns(r.id?`<button type="button" class="danger" data-act="delsym" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const o={id:r.id||uid(),t:parseDT(fd.get('d'),fd.get('h')).toISOString(),what:fd.get('what').trim(),sev:+fd.get('sev'),dur:fd.get('dur').trim(),note:fd.get('note').trim()};
+  const i=D.symptoms.findIndex(x=>x.id===o.id);if(i>=0)D.symptoms[i]=o;else D.symptoms.push(o);save();render();
+  if(/στήθος|δύσπνοια/.test(o.what)&&o.sev>=4)setTimeout(()=>alert('Έντονος πόνος στο στήθος ή δύσπνοια μπορεί να είναι επείγον. Αν συμβαίνει τώρα, καλέστε το 166.'),200);else toast('Καταγράφηκε')});
+}
+function symCard(){const l=D.symptoms.slice().sort((a,b)=>a.t<b.t?1:-1);
+ return `<div class="card"><div class="row sp"><h2 style="margin:0">🤒 Συμπτώματα ${hq('symptoms')}</h2><button class="pri small" data-act="addsym">+ Νέο</button></div>
+ ${l.length?l.slice(0,15).map(s=>{const d=new Date(s.t),c=symCtx(s);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><b>${esc(s.what)}</b> <span class="tag">ένταση ${s.sev}/5</span>${s.dur?`<div class="mut">Διάρκεια: ${esc(s.dur)}</div>`:''}${c.meds.length?`<div class="mut">💊 ${esc(c.meds.join(' · '))}</div>`:''}${c.bp?`<div class="mut">❤️ Πίεση κοντά σε εκείνη την ώρα: ${c.bp.sys}/${c.bp.dia}</div>`:''}${s.note?`<div class="mut">${esc(s.note)}</div>`:''}</div><button class="small" data-act="editsym" data-id="${s.id}">✎</button></div>`}).join(''):'<p class="mut">Δεν έχουν καταγραφεί συμπτώματα.</p>'}</div>`}
+
+/* ---------- Ερωτήσεις για τον γιατρό ---------- */
+function qForm(r){r=r||{};
+ openDlg(`<h2>${r.id?'Ερώτηση':'Νέα ερώτηση για τον γιατρό'} ${hq('questions')}</h2>
+ <label>Ερώτηση<textarea name="text" required placeholder="π.χ. Μπορώ να παίρνω το χάπι της πίεσης το βράδυ;">${esc(r.text||'')}</textarea></label>
+ ${r.id?`<label>Απάντηση γιατρού<textarea name="ans">${esc(r.ans||'')}</textarea></label><label class="ck"><input type="checkbox" name="done" ${r.done?'checked':''}> Απαντήθηκε</label>`:''}
+ ${btns(r.id?`<button type="button" class="danger" data-act="delq" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const o=Object.assign({},r,{id:r.id||uid(),t:r.t||new Date().toISOString(),text:fd.get('text').trim(),ans:(fd.get('ans')||'').trim(),done:!!fd.get('done')});if(o.ans)o.done=true;
+  const i=D.questions.findIndex(x=>x.id===o.id);if(i>=0)D.questions[i]=o;else D.questions.push(o);save();render();toast('Αποθηκεύτηκε')});
+}
+function qCard(){const open=D.questions.filter(q=>!q.done),done=D.questions.filter(q=>q.done).slice(-10).reverse();
+ return `<div class="card"><div class="row sp"><h2 style="margin:0">❓ Ερωτήσεις για τον γιατρό ${hq('questions')}</h2><button class="pri small" data-act="addq">+ Νέα</button></div>
+ ${open.length?open.map(q=>`<div class="dose edf" data-act="editq" data-id="${q.id}"><div class="grow">• ${esc(q.text)}</div><span class="pen">✎</span></div>`).join(''):'<p class="mut">Καμία ανοιχτή ερώτηση. Γράψτε ό,τι σας έρχεται στο μυαλό, για να το έχετε στο ραντεβού.</p>'}
+ ${done.length?`<h3>Απαντημένες</h3>${done.map(q=>`<div class="dose done edf" data-act="editq" data-id="${q.id}"><div class="grow">✓ ${esc(q.text)}${q.ans?`<div class="mut">→ ${esc(q.ans)}</div>`:''}</div></div>`).join('')}`:''}</div>`}
+
+/* ---------- Αλληλεπιδράσεις ---------- */
+function medsSig(){return D.meds.filter(m=>m.active).map(m=>m.name).sort().join('|')}
+async function interCheck(focus,silent){
+ const act=D.meds.filter(m=>m.active);
+ if(!act.length){if(!silent)alert('Δεν υπάρχουν ενεργά φάρμακα.');return}
+ if(silent&&act.length<2&&!D.profile.allergies&&!D.profile.conditions)return;
+ if(!getKey()){if(!silent)askKey();return}
+ if(!silent)openDlg(`<h2>⚠️ Έλεγχος αλληλεπιδράσεων</h2><div id="interst">⏳ Η τεχνητή νοημοσύνη ελέγχει ${act.length} φάρμακα…</div><div class="acts"><button type="button" data-act="close">Άκυρο</button></div>`,()=>{});
+ else toast('⏳ Έλεγχος αλληλεπιδράσεων…');
+ try{
+  const r=await aiJSON([{type:'text',text:`Είσαι κλινικός φαρμακοποιός. Έλεγξε τα φάρμακα αυτού του ασθενή για αλληλεπιδράσεις μεταξύ τους, με τις αλλεργίες και με τις παθήσεις του. Γράψε στα ελληνικά, απλά.
+Φάρμακα: ${act.map(m=>`${m.name}${m.strength?' '+m.strength:''}${m.substance?' (δραστική: '+m.substance+')':''} — ${freqText(m)}`).join('; ')}.
+Ασθενής: ${patientInfo()||'χωρίς άλλα στοιχεία'}.${focus?' Δώσε ιδιαίτερη προσοχή στο νέο φάρμακο: '+focus.name+'.':''}
+Απάντησε ΜΟΝΟ JSON: {"level":"ok ή minor ή moderate ή major","summary":"1-2 προτάσεις","items":[{"meds":["Α","Β"],"severity":"ήπια ή μέτρια ή σοβαρή","what":"τι μπορεί να συμβεί","advice":"τι να κάνει ο ασθενής"}],"allergy":[{"med":"","text":""}],"conditions":[{"med":"","text":""}],"tips":["σύντομες πρακτικές συμβουλές, π.χ. απόσταση ωρών, αλκοόλ, γκρέιπφρουτ, ήλιος"]}
+Ανέφερε μόνο πραγματικές, γνωστές αλληλεπιδράσεις. Μη συστήνεις διακοπή φαρμάκων — μόνο «συζητήστε με τον γιατρό».`}]);
+  D.settings.lastInter={t:new Date().toISOString(),sig:medsSig(),r};persist();
+  const serious=r.level==='major'||r.level==='moderate'||(r.allergy||[]).length;
+  if(silent){if(serious)interDlg(r);else toast('✓ Δεν βρέθηκε σημαντική αλληλεπίδραση');render();return}
+  interDlg(r);render();
+ }catch(e){if(silent)toast('Ο έλεγχος αλληλεπιδράσεων δεν έγινε');else{const s=$('#interst');if(s)s.innerHTML='✕ '+esc(e.message)}}
+}
+const LVL={ok:['✓ Δεν βρέθηκαν σημαντικές αλληλεπιδράσεις','var(--green)'],minor:['Ήπιες αλληλεπιδράσεις','var(--yellow)'],moderate:['Μέτριες αλληλεπιδράσεις — συζητήστε με γιατρό','var(--orange)'],major:['⚠️ Σοβαρή αλληλεπίδραση — επικοινωνήστε με γιατρό','var(--red)']};
+const SEVC={'ήπια':'var(--yellow)','μέτρια':'var(--orange)','σοβαρή':'var(--red)'};
+function interDlg(r){const L=LVL[r.level]||LVL.minor;
+ openDlg(`<h2>⚠️ Αλληλεπιδράσεις ${hq('inter')}</h2><div style="font-weight:700;color:${L[1]}">${L[0]}</div>${r.summary?`<p>${esc(r.summary)}</p>`:''}
+ ${(r.allergy||[]).map(a=>`<div class="card warn" style="margin:6px 0"><b>🚫 Αλλεργία: ${esc(a.med)}</b><div>${esc(a.text)}</div></div>`).join('')}
+ ${(r.items||[]).map(i=>`<div class="card" style="margin:6px 0;border-left:5px solid ${SEVC[i.severity]||'var(--yellow)'}"><b>${esc((i.meds||[]).join(' + '))}</b> <span class="tag">${esc(i.severity||'')}</span><div>${esc(i.what||'')}</div>${i.advice?`<div class="mut">👉 ${esc(i.advice)}</div>`:''}</div>`).join('')}
+ ${(r.conditions||[]).map(c=>`<div class="card" style="margin:6px 0"><b>${esc(c.med)}</b><div>${esc(c.text)}</div></div>`).join('')}
+ ${(r.tips||[]).length?`<h3>Χρήσιμες συμβουλές</h3><ul style="margin:0;padding-left:20px">${r.tips.map(t=>`<li>${esc(t)}</li>`).join('')}</ul>`:''}
+ <div class="mut" style="font-size:12px;margin-top:8px">🤖 Από τεχνητή νοημοσύνη — μπορεί να έχει λάθη ή παραλείψεις. Μη σταματάτε φάρμακα χωρίς τον γιατρό. Ρωτήστε και τον φαρμακοποιό σας.</div>
+ <div class="acts"><button type="button" class="pri" data-act="close">Εντάξει</button></div>`,()=>{});
+}
+function interCard(){const li=D.settings.lastInter,act=D.meds.filter(m=>m.active).length;if(!act)return '';
+ let s='';if(li){const L=LVL[li.r.level]||LVL.minor,old=li.sig!==medsSig();s=`<div class="mut" style="margin-top:6px">Τελευταίος έλεγχος ${fmtS(new Date(li.t))}: <b style="color:${L[1]}">${L[0]}</b>${old?' · <b>άλλαξαν τα φάρμακα — ξαναελέγξτε</b>':''} ${!old?'<button class="small" data-act="intershow">Προβολή</button>':''}</div>`}
+ return `<div class="card"><div class="row sp"><div class="grow"><b>⚠️ Αλληλεπιδράσεις</b> ${hq('inter')}</div><button class="pri small" data-act="intercheck">Έλεγχος τώρα</button></div>${s}</div>`}
+
+/* ---------- Συνταγή από φωτογραφία ---------- */
+const TPD={1:['08:00'],2:['08:00','20:00'],3:['08:00','14:00','20:00'],4:['08:00','12:00','16:00','20:00']};
+async function rxRun(file){
+ openDlg(`<h2>📄 Συνταγή από φωτογραφία</h2><div id="rxst">⏳ Ετοιμασία φωτογραφίας…</div><div class="acts"><button type="button" data-act="close">Άκυρο</button></div>`,()=>{});
+ const st=()=>$('#rxst');
+ try{const url=await shrink(file);if(st())st().textContent='⏳ Η τεχνητή νοημοσύνη διαβάζει τη συνταγή…';
+  const r=await aiJSON([{type:'text',text:`Διάβασε αυτή την ιατρική συνταγή (ελληνική, ηλεκτρονική ή χειρόγραφη). Απάντησε ΜΟΝΟ JSON:
+{"doctor":"όνομα και ειδικότητα γιατρού ή κενό","date":"YYYY-MM-DD ή κενό","meds":[{"name":"εμπορική ονομασία","strength":"π.χ. 5 mg","form":"ένα από: ${FORMS.join(', ')}","substance":"δραστική ουσία","dose":"π.χ. 1 δισκίο","timesPerDay":αριθμός,"durationDays":αριθμός ή null,"purpose":"τι κάνει, 1 πρόταση","food":"prin ή me ή meta ή nistis ή adiaforo ή κενό"}]}
+Μην επινοείς φάρμακα που δεν φαίνονται.`},{type:'image_url',image_url:{url}}]);
+  const meds=(r.meds||[]).filter(m=>m&&m.name);
+  if(!meds.length){if(st())st().textContent='✕ Δεν βρέθηκαν φάρμακα. Τραβήξτε τη συνταγή ίσια, ολόκληρη και με καλό φως.';return}
+  const f=$('#dform');if(!f)return;
+  f.innerHTML=`<h2>📄 Βρέθηκαν ${meds.length} φάρμακα</h2>${r.doctor?`<div class="mut">Γιατρός: ${esc(r.doctor)}</div>`:''}<div class="mut">Ελέγξτε ονόματα, δόσεις και ώρες. Ξετσεκάρετε ό,τι δεν θέλετε.</div>
+  ${meds.map((m,i)=>`<fieldset><legend><label class="ck" style="margin:0"><input type="checkbox" name="k" value="${i}" checked> <b>${esc(m.name)}</b></label></legend>
+   <div class="g2"><label>Όνομα<input name="n${i}" value="${esc(m.name)}"></label><label>Περιεκτικότητα<input name="s${i}" value="${esc(m.strength||'')}"></label></div>
+   <div class="g2"><label>Δόση<input name="d${i}" value="${esc(m.dose||'')}"></label><label>Ώρες (με κόμμα)<input name="t${i}" value="${(TPD[+m.timesPerDay]||TPD[1]).join(', ')}"></label></div>
+   <label>Διάρκεια (ημέρες, κενό = συνεχώς)<input name="u${i}" inputmode="numeric" value="${m.durationDays||''}"></label>${m.purpose?`<div class="mut">${esc(m.purpose)}</div>`:''}</fieldset>`).join('')}
+  <div class="mut" style="font-size:12px">🤖 Μπορεί να υπάρχουν λάθη ανάγνωσης — συγκρίνετε με τη συνταγή. Ώρες και δόσεις όπως σας είπε ο γιατρός.</div>
+  <div class="acts"><button type="button" data-act="close">Άκυρο</button><button class="pri" type="submit">Προσθήκη επιλεγμένων</button></div>`;
+  f.onsubmit=e=>{e.preventDefault();const fd=new FormData(f),today=dkey(new Date());let n=0;
+   fd.getAll('k').map(Number).forEach(i=>{const m=meds[i],times=[...new Set(String(fd.get('t'+i)||'').split(/[,\s]+/).map(x=>x.replace('.',':')).filter(x=>/^\d{1,2}:\d{2}$/.test(x)).map(x=>x.padStart(5,'0')))].sort(),dur=+fd.get('u'+i)||0;
+    const o={id:uid(),name:String(fd.get('n'+i)).trim()||m.name,strength:String(fd.get('s'+i)).trim(),form:FORMS.includes(m.form)?m.form:'',substance:m.substance||'',purpose:m.purpose||'',dose:String(fd.get('d'+i)).trim(),food:FOOD[m.food]!==undefined?m.food||'':'',prn:!times.length,times,days:[],start:today,until:dur?dkey(new Date(Date.now()+(dur-1)*864e5)):'',doctor:r.doctor||'',stock:'',perDose:1,notes:'',active:true,ai:true,history:[]};
+    addHist(o,'Έναρξη από συνταγή: '+[o.strength,o.dose,freqText(o)].filter(Boolean).join(' · '));D.meds.push(o);n++});
+   save();$('#dlg').close();showTab('far');toast('Προστέθηκαν '+n+' φάρμακα');if(n)setTimeout(()=>interCheck(null,true),600)};
+ }catch(e){if(st())st().innerHTML='✕ '+esc(e.message)}
+}
+
+/* ---------- Προληπτικοί έλεγχοι & εμβόλια ---------- */
+function hypertensive(){const st=bpStats(D.bp.filter(r=>+new Date(r.t)>=Date.now()-90*864e5));return D.profile.heart||D.meds.some(m=>m.active&&/π[ιί]εσ|υπέρτασ|υπερτασ/i.test(m.purpose||''))||(st&&(st.sys>=135||st.dia>=85))}
+const PREV=[
+ {k:'flu',n:'💉 Αντιγριπικό εμβόλιο',m:12,ok:()=>true,t:'Κάθε φθινόπωρο (Οκτώβριο–Νοέμβριο). Συστήνεται ιδιαίτερα μετά τα 60 και σε όσους έχουν χρόνια νοσήματα (καρδιά, πίεση, διαβήτη, πνεύμονες, νεφρούς).'},
+ {k:'pneumo',n:'💉 Πνευμονιοκοκκικό εμβόλιο',m:0,ok:(a,s,p)=>a>=65||p.diabetes||p.heart||p.kidney||p.smoker,t:'Προστατεύει από πνευμονία. Συστήνεται μετά τα 65 ή νωρίτερα με χρόνια νοσήματα ή κάπνισμα. Ο γιατρός σας λέει ποιο σχήμα χρειάζεστε.'},
+ {k:'tetanus',n:'💉 Τέτανος–διφθερίτιδα (αναμνηστική)',m:120,ok:()=>true,t:'Αναμνηστική δόση κάθε 10 χρόνια για όλους τους ενήλικες.'},
+ {k:'zoster',n:'💉 Εμβόλιο έρπητα ζωστήρα',m:0,ok:a=>a>=60,t:'Προστατεύει από τον έρπητα ζωστήρα και τους επίμονους πόνους που αφήνει. Συστήνεται μετά τα 60.'},
+ {k:'lipids',n:'🧪 Χοληστερίνη / λιπίδια',m:0,mf:(a,s,p)=>p.diabetes||p.heart||p.kidney||hypertensive()?12:60,ok:a=>a>=40,t:'Μετά τα 40 κάθε 5 χρόνια. Κάθε χρόνο αν έχετε υπέρταση, διαβήτη, καρδιοπάθεια ή παίρνετε φάρμακο για χοληστερίνη.'},
+ {k:'glucose',n:'🧪 Σάκχαρο αίματος',m:0,mf:(a,s,p)=>{const b=body();return p.diabetes?3:(b&&b.bmi>=25)||hypertensive()?12:36},ok:a=>a>=35,t:'Μετά τα 35 κάθε 3 χρόνια, κάθε χρόνο αν είστε υπέρβαρος ή έχετε υπέρταση. Με διαβήτη γλυκοζυλιωμένη αιμοσφαιρίνη κάθε 3–6 μήνες.'},
+ {k:'kidney',n:'🧪 Νεφρική λειτουργία & ούρα',m:12,ok:(a,s,p)=>p.diabetes||p.kidney||hypertensive(),t:'Κρεατινίνη, κάλιο και γενική ούρων κάθε χρόνο σε υπέρταση ή διαβήτη, γιατί τα φάρμακα και η ίδια η πίεση επηρεάζουν τους νεφρούς.'},
+ {k:'heart',n:'❤️ Καρδιολογικός έλεγχος (καρδιογράφημα)',m:12,ok:(a,s,p)=>p.heart||hypertensive(),t:'Ετήσιος έλεγχος με καρδιογράφημα σε υπέρταση ή καρδιοπάθεια, ή όπως ορίσει ο καρδιολόγος.'},
+ {k:'colon',n:'🔬 Έλεγχος παχέος εντέρου',m:24,ok:a=>a>=50&&a<=75,t:'Από 50 έως 75: εξέταση αίματος στα κόπρανα κάθε 2 χρόνια ή κολονοσκόπηση κάθε 10 χρόνια (νωρίτερα αν υπάρχει οικογενειακό ιστορικό).'},
+ {k:'mammo',n:'🔬 Μαστογραφία',m:24,ok:(a,s)=>s==='f'&&a>=45&&a<=74,t:'Για γυναίκες, συνήθως από τα 45–50 έως τα 74, κάθε 1–2 χρόνια.'},
+ {k:'pap',n:'🔬 Τεστ Παπανικολάου',m:36,ok:(a,s)=>s==='f'&&a>=21&&a<=65,t:'Για γυναίκες 21–65, κάθε 3 χρόνια (ή τεστ ιού θηλωμάτων κάθε 5 χρόνια μετά τα 30).'},
+ {k:'psa',n:'🔬 Έλεγχος προστάτη',m:24,ok:(a,s)=>s==='m'&&a>=50&&a<=75,t:'Για άνδρες 50–75, συζήτηση με τον γιατρό για εξέταση προστάτη (PSA). Από τα 45 αν υπάρχει οικογενειακό ιστορικό.'},
+ {k:'bone',n:'🦴 Οστική πυκνότητα',m:24,ok:(a,s)=>(s==='f'&&a>=65)||(s==='m'&&a>=70),t:'Για οστεοπόρωση: γυναίκες μετά τα 65, άνδρες μετά τα 70, ή νωρίτερα με παράγοντες κινδύνου.'},
+ {k:'eyes',n:'👁 Οφθαλμίατρος',m:0,mf:(a,s,p)=>p.diabetes?12:24,ok:a=>a>=40,t:'Μετά τα 40 κάθε 2 χρόνια για γλαύκωμα. Με διαβήτη κάθε χρόνο (βυθός ματιού).'},
+ {k:'dentist',n:'🦷 Οδοντίατρος',m:12,ok:()=>true,t:'Έλεγχος και καθαρισμός κάθε χρόνο.'}
+];
+function prevList(){const p=D.profile,a=ageOf(),s=p.sex;return PREV.filter(x=>a==null||x.ok(a,s,p)).map(x=>{const mo=x.mf?x.mf(a,s,p):x.m,rec=(D.prev||{})[x.k]||{};let due=null,st='never';
+ if(rec.last){if(mo){const d=fromKey(rec.last);d.setMonth(d.getMonth()+mo);due=d;const days=(d-new Date())/864e5;st=days<0?'over':days<=30?'soon':'ok'}else st='once'}return Object.assign({},x,{mo,rec,due,st})})}
+function prevCard(){const L=prevList(),a=ageOf();const C={over:['var(--red)','Εκπρόθεσμο'],soon:['var(--orange)','Σύντομα'],ok:['var(--green)','Εντάξει'],once:['var(--green)','Έγινε'],never:['var(--mut)','Δεν έχει καταγραφεί']};
+ return `<div class="card"><h2>🛡 Προληπτικοί έλεγχοι & εμβόλια ${hq('prev')}</h2>${a==null||!D.profile.sex?'<div class="mut" style="margin-bottom:6px">Δηλώστε ηλικία και φύλο για λίστα προσαρμοσμένη σε εσάς.</div>':''}
+ ${L.map(x=>`<div class="dose edf" data-act="prevedit" data-k="${x.k}"><div class="grow"><b>${x.n}</b><div class="mut">${x.mo?'Κάθε '+(x.mo>=12?(x.mo/12)+(x.mo===12?' χρόνο':' χρόνια'):x.mo+' μήνες'):'Μία φορά / όπως ορίσει ο γιατρός'}${x.rec.last?' · τελευταίο '+fmtS(fromKey(x.rec.last)):''}${x.due?' · επόμενο '+fmtS(x.due):''}</div></div><span class="tag" style="background:none;border:1px solid ${C[x.st][0]};color:${C[x.st][0]}">${C[x.st][1]}</span></div>`).join('')}
+ <div class="mut" style="font-size:12px;margin-top:6px">Ενδεικτικό πρόγραμμα με βάση τις συνήθεις συστάσεις. Τι χρειάζεστε ακριβώς το ορίζει ο γιατρός σας.</div></div>`}
+function prevEdit(k){const x=PREV.find(p=>p.k===k),rec=(D.prev||{})[k]||{};
+ openDlg(`<h2>${x.n}</h2><p>${x.t}</p><label>Πότε έγινε τελευταία φορά<input type="date" name="d" value="${rec.last||''}"></label><label>Σημείωση<input name="note" value="${esc(rec.note||'')}" placeholder="π.χ. αποτέλεσμα, πού έγινε"></label>
+ <div class="acts">${rec.last?'<button type="button" class="danger" data-act="prevclear" data-k="'+k+'" style="margin-right:auto">Καθαρισμός</button>':''}<button type="button" data-act="prevtoday" data-k="${k}">Έγινε σήμερα</button><button type="button" data-act="close">Άκυρο</button><button class="pri" type="submit">Αποθήκευση</button></div>`,
+ fd=>{D.prev[k]={last:fd.get('d'),note:fd.get('note').trim()};if(!D.prev[k].last)delete D.prev[k];save();render();toast('Αποθηκεύτηκε')})}
+
+/* ---------- Έκτακτη ανάγκη ---------- */
+function contactPhone(){const m=String(D.profile.contact||'').replace(/[\s\-\.]/g,'').match(/\+?\d{10,14}/);return m?m[0]:''}
+function emergCard(){const ph=contactPhone();return `<div class="card warn"><h2>🚨 Έκτακτη ανάγκη ${hq('emergency')}</h2><div class="row"><a class="btn" href="tel:166" style="text-decoration:none;background:var(--red);color:#fff;border-color:var(--red);font-weight:700">📞 166 ΕΚΑΒ</a><a class="btn" href="tel:112" style="text-decoration:none">📞 112</a>${ph?`<a class="btn" href="tel:${ph}" style="text-decoration:none">📞 Επαφή</a>`:''}</div>
+ <button class="wide" style="margin-top:8px" data-act="lockimg">🖼 Εικόνα για την κλειδωμένη οθόνη ${''}</button></div>`}
+function wrapText(ctx,text,maxW){const words=String(text).split(/\s+/),lines=[];let cur='';words.forEach(w=>{const t=cur?cur+' '+w:w;if(ctx.measureText(t).width>maxW&&cur){lines.push(cur);cur=w}else cur=t});if(cur)lines.push(cur);return lines}
+async function lockImage(){
+ const p=D.profile,W=1080,H=2400,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
+ x.fillStyle='#111';x.fillRect(0,0,W,H);
+ let y=Math.round(H*0.36);const M=70,F='system-ui,-apple-system,Roboto,sans-serif';
+ x.fillStyle='#c62828';x.fillRect(0,y,W,120);x.fillStyle='#fff';x.font=`bold 58px ${F}`;x.textAlign='center';x.fillText('⚕ ΣΕ ΠΕΡΙΠΤΩΣΗ ΑΝΑΓΚΗΣ',W/2,y+80);x.textAlign='left';y+=180;
+ const line=(t,size,col,bold)=>{x.font=`${bold?'bold ':''}${size}px ${F}`;x.fillStyle=col||'#fff';wrapText(x,t,W-2*M).forEach(l=>{if(y<H-120){x.fillText(l,M,y);y+=size*1.28}})};
+ const lbl=t=>{y+=14;line(t,34,'#9aa8a4',true)};
+ line((p.name||'—')+(ageOf()!=null?', '+ageOf()+' ετών':''),60,'#fff',true);
+ if(p.blood)line('Ομάδα αίματος: '+p.blood,44,'#fff');
+ lbl('ΑΛΛΕΡΓΙΕΣ');line(p.allergies||(p.noAllergy?'Καμία γνωστή':'—'),48,'#ff6b6b',true);
+ if(p.conditions){lbl('ΠΑΘΗΣΕΙΣ');line(p.conditions,40)}
+ const act=D.meds.filter(m=>m.active);lbl('ΦΑΡΜΑΚΑ ('+act.length+')');act.slice(0,12).forEach(m=>line('• '+m.name+(m.strength?' '+m.strength:'')+' — '+freqText(m),38));if(act.length>12)line('… και άλλα '+(act.length-12),36,'#9aa8a4');
+ if(p.other){lbl('ΑΛΛΑ');line(p.other,38)}
+ if(p.contact){lbl('ΕΠΑΦΗ');line(p.contact,44,'#fff',true)}
+ x.font=`28px ${F}`;x.fillStyle='#6b7a76';x.fillText('Ενημέρωση '+fmtS(new Date())+' · Φάκελος Υγείας',M,H-70);
+ const blob=await new Promise(r=>c.toBlob(r,'image/png')),url=URL.createObjectURL(blob);
+ openDlg(`<h2>🖼 Εικόνα κλειδωμένης οθόνης ${hq('lockimg')}</h2><img src="${url}" style="width:55%;display:block;margin:0 auto 10px;border-radius:12px;border:1px solid var(--line)">
+ <div class="mut">Αποθηκεύστε την και βάλτε την ως φόντο στην <b>κλειδωμένη οθόνη</b>: Ρυθμίσεις → Ταπετσαρία (ή Οθόνη κλειδώματος). Ξαναφτιάξτε την όταν αλλάζουν τα φάρμακα.</div>
+ <div class="acts"><button type="button" data-act="close">Κλείσιμο</button><a class="btn pri" href="${url}" download="karta-anagkis.png" style="text-decoration:none;background:var(--pri);color:var(--onpri)">⬇ Αποθήκευση</a></div>`,()=>{});
+ window._lockblob=blob;
+}
+
+/* ---------- Πλήρης αναφορά για γιατρό ---------- */
+function fullReport(){
+ const p=D.profile,act=D.meds.filter(m=>m.active),since=Date.now()-30*864e5,bpl=D.bp.filter(r=>+new Date(r.t)>=since),st=bpStats(bpl),rs=recentStopped();
+ const T=(h,rows)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.join('')}</table>`;
+ let h=`<h2>Ιατρική αναφορά — ${esc(p.name||'')}</h2><div>${ageOf()!=null?ageOf()+' ετών · ':''}${p.sex==='m'?'Άνδρας · ':p.sex==='f'?'Γυναίκα · ':''}${p.height?p.height+' εκ. · ':''}${p.weight?p.weight+' κιλά · ':''}${p.blood?'Ομάδα αίματος '+esc(p.blood)+' · ':''}${p.amka?'ΑΜΚΑ '+esc(p.amka):''}</div><div>Εκτύπωση: ${fmtS(new Date())}</div>
+ <h3>Αλλεργίες</h3><div><b>${esc(p.allergies||(p.noAllergy?'Καμία γνωστή':'Δεν έχει δηλωθεί'))}</b></div>
+ ${p.conditions?`<h3>Παθήσεις / ιστορικό</h3><div>${esc(p.conditions)}</div>`:''}
+ <h3>Ενεργά φάρμακα (${act.length})</h3>${act.length?T(['Φάρμακο','Δόση','Πότε','Για','Τήρηση 30 ημ.'],act.map(m=>{const ad=m.prn?null:adherence(m,30);return `<tr><td><b>${esc(m.name)}</b> ${esc(m.strength||'')}${m.substance?'<br><small>'+esc(m.substance)+'</small>':''}</td><td>${esc(m.dose||'')}</td><td>${esc(freqText(m))}</td><td>${esc(m.purpose||'')}</td><td>${ad!=null?ad+'%':'—'}</td></tr>`})):'—'}
+ ${rs.length?`<h3>Διακοπή τελευταίων 3 μηνών</h3>${rs.map(m=>`<div>${esc(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+esc(m.endReason)+')':''}</div>`).join('')}`:''}
+ <h3>Πίεση (30 ημέρες)</h3>${st?`<div>Μέσος όρος <b>${st.sys}/${st.dia}</b>${st.pulse?', σφυγμοί '+st.pulse:''} · ${st.n} μετρήσεις · εύρος μεγάλης ${st.minS}–${st.maxS} · πάνω από 135/85: ${st.high}</div>${T(['Ζώνη','Μετρ.','Μ.Ο.'],ZONES.map(z=>{const zl=bpl.filter(r=>zoneOf(new Date(r.t))===z),s=bpStats(zl);return `<tr><td>${z.n}</td><td>${zl.length}</td><td>${s?s.sys+'/'+s.dia:'—'}</td></tr>`}))}`:'<div>Χωρίς μετρήσεις</div>'}`;
+ const vt=Object.keys(VT).map(k=>{const l=D.vitals.filter(r=>r.type===k&&+new Date(r.t)>=since);if(!l.length)return '';const avg=l.reduce((a,r)=>a+r.v,0)/l.length,last=l.sort((a,b)=>a.t<b.t?1:-1)[0];return `<tr><td>${VT[k].n}</td><td>${fmtNum(last.v)} ${VT[k].u} (${fmtS(new Date(last.t))})</td><td>${fmtNum(avg)}</td><td>${l.length}</td></tr>`}).join('');
+ if(vt)h+=`<h3>Άλλες μετρήσεις (30 ημέρες)</h3>${T(['Μέτρηση','Τελευταία','Μ.Ο.','Πλήθος'],[vt])}`;
+ const lg=labGroups();if(lg.length)h+=`<h3>Εξετάσεις (τελευταία τιμή)</h3>${T(['Εξέταση','Τιμή','Όρια','Ημερομηνία','Προηγούμενη'],lg.map(([n,l])=>{const r=l[0],f=labFlag(r);return `<tr><td>${esc(n)}</td><td><b>${f.s} ${fmtNum(r.v)}</b> ${esc(r.u||'')}</td><td>${r.lo??''}–${r.hi??''}</td><td>${fmtS(fromKey(r.d))}</td><td>${l[1]?fmtNum(l[1].v)+' ('+fmtS(fromKey(l[1].d))+')':''}</td></tr>`}))}`;
+ const sy=D.symptoms.filter(s=>+new Date(s.t)>=since).sort((a,b)=>a.t<b.t?1:-1);if(sy.length)h+=`<h3>Συμπτώματα (30 ημέρες)</h3>${T(['Ημερομηνία','Σύμπτωμα','Ένταση','Σχετικά'],sy.map(s=>{const c=symCtx(s);return `<tr><td>${fmtS(new Date(s.t))} ${hm(new Date(s.t))}</td><td>${esc(s.what)}${s.dur?' ('+esc(s.dur)+')':''}</td><td>${s.sev}/5</td><td>${esc([c.meds.join(', '),c.bp?'πίεση '+c.bp.sys+'/'+c.bp.dia:''].filter(Boolean).join(' · '))}</td></tr>`}))}`;
+ const q=D.questions.filter(x=>!x.done);if(q.length)h+=`<h3>Ερωτήσεις για τον γιατρό</h3><ol>${q.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ol>`;
+ doPrint(h);
+}
+
+/* ---------- Πιεσόμετρο με ασύρματη σύνδεση ---------- */
+function sfloat(v){let m=v&0x0FFF,e=v>>12;if(m>=0x800)m-=0x1000;if(e>=8)e-=16;return m*Math.pow(10,e)}
+async function bleBP(){
+ const dev=await navigator.bluetooth.requestDevice({filters:[{services:[0x1810]}]});
+ const srv=await dev.gatt.connect(),s=await srv.getPrimaryService(0x1810),ch=await s.getCharacteristic(0x2A35);
+ return new Promise((res,rej)=>{let got=null,tm=null;const done=()=>{try{dev.gatt.disconnect()}catch(_){}res(got)};
+  const to=setTimeout(()=>{if(got)done();else{try{dev.gatt.disconnect()}catch(_){}rej(new Error('Δεν ήρθε μέτρηση. Κάντε μέτρηση με το πιεσόμετρο και ξαναδοκιμάστε.'))}},90000);
+  ch.addEventListener('characteristicvaluechanged',e=>{const v=e.target.value,f=v.getUint8(0);let o=7;const kpa=f&1;let sys=sfloat(v.getUint16(1,true)),dia=sfloat(v.getUint16(3,true));if(kpa){sys*=7.50062;dia*=7.50062}if(f&2)o+=7;const pulse=(f&4)?sfloat(v.getUint16(o,true)):null;
+   got={sys:Math.round(sys),dia:Math.round(dia),pulse:pulse?Math.round(pulse):null};clearTimeout(tm);tm=setTimeout(()=>{clearTimeout(to);done()},2500)}); // κρατάμε την τελευταία (πιο πρόσφατη)
+  ch.startNotifications().catch(e=>{clearTimeout(to);rej(e)})});
+}
+async function bleFill(){const st=$('#blest');if(st)st.textContent='⏳ Επιλέξτε το πιεσόμετρο και κάντε μέτρηση…';
+ try{const r=await bleBP();const f=$('#dform');if(!f||!r)return;f.elements.sys.value=r.sys;f.elements.dia.value=r.dia;if(r.pulse)f.elements.pulse.value=r.pulse;if(st)st.textContent='✓ Ήρθε η μέτρηση '+r.sys+'/'+r.dia+(r.pulse?' ♥ '+r.pulse:'')}catch(e){if(st)st.textContent='✕ '+(e.name==='NotFoundError'?'Δεν επιλέχθηκε συσκευή.':e.message)}}
+
+/* ---------- Φωτογραφία χαπιού ---------- */
+async function pillPhoto(file){try{const u=await thumb(file,260,0.7);const f=$('#dform');if(!f)return;f.elements.photo.value=u;const pv=$('#pillpv');if(pv){pv.src=u;pv.style.display='block'}}catch(e){toast(e.message)}}
+
+/* ---------- Γρήγορη καταγραφή (αρχική) ---------- */
+function quickCard(){return `<div class="card"><h2>Γρήγορη καταγραφή</h2><div class="chips">
+ <button class="chip" data-act="addbp">❤️ Πίεση</button><button class="chip" data-act="addvital" data-t="glu">🩸 Σάκχαρο</button><button class="chip" data-act="addvital" data-t="wt">⚖️ Βάρος</button><button class="chip" data-act="addvital" data-t="temp">🌡️ Θερμοκρασία</button><button class="chip" data-act="addvital" data-t="spo2">🫁 Οξυγόνο</button><button class="chip" data-act="addsym">🤒 Σύμπτωμα</button><button class="chip" data-act="addq">❓ Ερώτηση για γιατρό</button></div></div>`}
+function simExtra(){let h='';const today=dkey(new Date()),lim=dkey(new Date(Date.now()+10*864e5));
+ const rx=D.meds.filter(m=>m.active&&m.rxEnd&&m.rxEnd<=lim);
+ if(rx.length)h+=`<div class="card warn"><h2>📄 Ανανέωση συνταγής ${hq('rxend')}</h2>${rx.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.rxEnd<today?'<b style="color:var(--red)">έληξε</b> '+fmtS(fromKey(m.rxEnd)):'λήγει '+fmtS(fromKey(m.rxEnd))}</div>`).join('')}</div>`;
+ const pv=prevList().filter(x=>x.st==='over');if(pv.length)h+=`<div class="card"><h2>🛡 Εκπρόθεσμοι έλεγχοι</h2>${pv.map(x=>`<div class="edf" data-act="prevedit" data-k="${x.k}">${x.n} <span class="mut">— έπρεπε ${fmtS(x.due)}</span></div>`).join('')}</div>`;
+ const oq=D.questions.filter(q=>!q.done).length,na=D.appts.find(a=>!a.done&&a.d>=today&&a.d<=dkey(new Date(Date.now()+3*864e5)));
+ if(oq&&na)h+=`<div class="card"><b>❓ Έχετε ${oq} ${oq===1?'ερώτηση':'ερωτήσεις'} για τον γιατρό</b> — ραντεβού ${fmtS(fromKey(na.d))}. <button class="small" data-act="goper">Προβολή</button></div>`;
+ return h}
+
+/* ---------- Νέα καρτέλα Μετρήσεις ---------- */
+function rPie(){
+ const v=D.settings.mview||'bp';
+ const bar=`<div class="chips" style="margin-bottom:12px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px">${MVIEWS.map(([k,t])=>`<button class="chip ${v===k?'on':''}" data-act="mview" data-v="${k}" style="white-space:nowrap">${t}</button>`).join('')}</div>`;
+ if(v==='bp'){rBp();$('#t-pie').insertAdjacentHTML('afterbegin',bar);return}
+ $('#t-pie').innerHTML=bar+(v==='labs'?rLabs():rVital(v));
+}
+
+/* ---------- Κλικ για τις νέες λειτουργίες ---------- */
+document.addEventListener('click',async e=>{
+ if(e.target.closest('nav button'))return;
+ const b=e.target.closest('[data-act]');if(!b)return;const a=b.dataset.act,id=b.dataset.id;
+ switch(a){
+  case 'people':peopleDlg();break;
+  case 'pswitch':$('#dlg').close();switchPerson(id);break;
+  case 'pdel':delPerson(id);break;
+  case 'mview':D.settings.mview=b.dataset.v;persist();render();break;
+  case 'addvital':vitalForm(b.dataset.t);break;
+  case 'editvital':{const r=D.vitals.find(x=>x.id===id);if(r)vitalForm(r.type,r);break}
+  case 'delvital':if(confirm('Διαγραφή της μέτρησης;')){D.vitals=D.vitals.filter(x=>x.id!==id);save();$('#dlg').close();render()}break;
+  case 'labphoto':if(!getKey()){askKey();break}$('#labIn').click();break;
+  case 'addlab':labForm();break;
+  case 'labdetail':labDetail(b.dataset.n);break;
+  case 'editlab':labForm(D.labs.find(x=>x.id===id));break;
+  case 'dellab':if(confirm('Διαγραφή της τιμής;')){D.labs=D.labs.filter(x=>x.id!==id);save();$('#dlg').close();render()}break;
+  case 'labexplain':labExplain(b.dataset.n);break;
+  case 'addsym':symForm();break;
+  case 'editsym':symForm(D.symptoms.find(x=>x.id===id));break;
+  case 'delsym':if(confirm('Διαγραφή;')){D.symptoms=D.symptoms.filter(x=>x.id!==id);save();$('#dlg').close();render()}break;
+  case 'symchip':{const i=$('#dform [name=what]');const cur=i.value.trim();i.value=cur?(cur.includes(b.dataset.v)?cur:cur+', '+b.dataset.v):b.dataset.v;break}
+  case 'addq':qForm();break;
+  case 'editq':qForm(D.questions.find(x=>x.id===id));break;
+  case 'delq':if(confirm('Διαγραφή;')){D.questions=D.questions.filter(x=>x.id!==id);save();$('#dlg').close();render()}break;
+  case 'intercheck':interCheck(null,false);break;
+  case 'intershow':if(D.settings.lastInter)interDlg(D.settings.lastInter.r);break;
+  case 'rxphoto':if(!getKey()){askKey();break}$('#rxIn').click();break;
+  case 'prevedit':prevEdit(b.dataset.k);break;
+  case 'prevtoday':D.prev[b.dataset.k]=Object.assign({},D.prev[b.dataset.k],{last:dkey(new Date())});save();$('#dlg').close();render();toast('Καταγράφηκε');break;
+  case 'prevclear':delete D.prev[b.dataset.k];save();$('#dlg').close();render();break;
+  case 'lockimg':lockImage();break;
+  case 'report':fullReport();break;
+  case 'goper':showTab('per');break;
+  case 'lockset':lockSetDlg(false);break;
+  case 'lockchange':lockSetDlg(true);break;
+  case 'lockbio':bioEnroll();break;
+  case 'lockoff':lockRemove();break;
+  case 'unlock':tryPin();break;
+  case 'unlockbio':tryBio(false);break;
+  case 'lockforgot':lockForgot();break;
+  case 'ble':bleFill();break;
+  case 'pillphoto':$('#pillIn').click();break;
+  case 'inttoggle':{const d=$('#daysBox'),al=$('#dform [name=alldays]');if(b.checked){al.checked=true;d.style.display='none'}break}
+ }
+});
+$('#labIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)labRun(f)});
+$('#rxIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)rxRun(f)});
+$('#pillIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)pillPhoto(f)});
+$('#lockpin').addEventListener('keydown',e=>{if(e.key==='Enter')tryPin()});
+document.addEventListener('visibilitychange',()=>{if(document.hidden)hiddenAt=Date.now();else if(lockCfg()&&!LOCKED&&hiddenAt&&Date.now()-hiddenAt>60000)showLock()});
+
+/* ---------- Βοήθεια για τις νέες λειτουργίες ---------- */
+Object.assign(HELP,{
+ glu:()=>['Σάκχαρο',`<ul><li><b>Νηστείας</b> (8 ώρες χωρίς φαγητό): φυσιολογικό κάτω από 100, 100–125 προδιαβήτης, 126 και πάνω υψηλό.</li><li><b>2 ώρες μετά το φαγητό</b>: φυσιολογικό κάτω από 140.</li><li><b>Κάτω από 70</b>: υπογλυκαιμία — πάρτε 15 γραμμάρια ζάχαρη.</li></ul>${D.profile.diabetes?'<b>Με διαβήτη</b> οι συνήθεις στόχοι είναι 80–130 πριν το φαγητό και κάτω από 180 δύο ώρες μετά. Ο γιατρός μπορεί να ορίσει διαφορετικούς.':'Αν έχετε διαβήτη, δηλώστε το στα προσωπικά στοιχεία για να δείχνει τους σωστούς στόχους.'}`],
+ wt:()=>{const b=body();return['Βάρος',`Ζυγιστείτε την ίδια ώρα, ιδανικά το πρωί μετά την τουαλέτα, χωρίς ρούχα ή με ελαφριά. ${b?'Για το ύψος σας το υγιές βάρος είναι <b>'+b.min+'–'+b.max+' κιλά</b>.':''}<br><br>Απότομη αύξηση 2 κιλών σε 2–3 μέρες, μαζί με πρήξιμο στα πόδια ή δύσπνοια, μπορεί να σημαίνει κατακράτηση υγρών — ενημερώστε τον γιατρό, ειδικά αν έχετε καρδιοπάθεια. Η τελευταία μέτρηση ενημερώνει αυτόματα το βάρος στα στοιχεία σας.`]},
+ temp:['Θερμοκρασία','<ul><li>κάτω από 37,5 °C: φυσιολογική</li><li>37,5–37,9: δέκατα</li><li>38–39,4: πυρετός</li><li>39,5 και πάνω: υψηλός πυρετός</li></ul>Στη μασχάλη βγαίνει περίπου 0,5 °C χαμηλότερα από το στόμα ή το αυτί.'],
+ spo2:['Οξυγόνο (οξύμετρο)','Το ποσοστό οξυγόνου στο αίμα.<ul><li>95–100%: φυσιολογικό</li><li>92–94%: χαμηλό — ξαναμετρήστε, προσέξτε αν έχετε δύσπνοια</li><li>κάτω από 92%: επικοινωνήστε με γιατρό</li></ul>Για σωστή μέτρηση: ζεστά χέρια, χωρίς βερνίκι νυχιών, ακίνητο χέρι, 1 λεπτό αναμονή. Σε χρόνια πνευμονοπάθεια ο στόχος μπορεί να είναι 88–92%.'],
+ waist:()=>['Περίμετρος μέσης',`Μετράτε με μεζούρα στο ύψος του αφαλού, όρθιοι, μετά από εκπνοή. Δείχνει το λίπος της κοιλιάς, που είναι το πιο επικίνδυνο για καρδιά και διαβήτη.<ul><li>Άνδρες: κάτω από 94 φυσιολογικό, 94–101 αυξημένος κίνδυνος, 102 και πάνω υψηλός</li><li>Γυναίκες: κάτω από 80 φυσιολογικό, 80–87 αυξημένος, 88 και πάνω υψηλός</li></ul>`],
+ labs:['Εξετάσεις αίματος','Φωτογραφίζετε το χαρτί των εξετάσεων και η τεχνητή νοημοσύνη περνάει τις τιμές με τα φυσιολογικά όρια του εργαστηρίου. Για κάθε εξέταση βλέπετε την πορεία της στον χρόνο (π.χ. η χοληστερίνη τα τελευταία 3 χρόνια).<br><br>Πατήστε σε μια εξέταση για να δείτε τι σημαίνει και για εξήγηση με τεχνητή νοημοσύνη. <b>↑</b> σημαίνει πάνω από το φυσιολογικό, <b>↓</b> κάτω.'],
+ symptoms:['Συμπτώματα','Γράψτε ό,τι νιώθετε, τη στιγμή που το νιώθετε. Η εφαρμογή δείχνει δίπλα ποια φάρμακα πήρατε τις προηγούμενες 4 ώρες και την πίεση εκείνη την ώρα. Έτσι φαίνεται π.χ. αν η ζάλη έρχεται πάντα 1 ώρα μετά από κάποιο χάπι — πολύτιμο για τον γιατρό.<br><br><b>Πόνος στο στήθος, ξαφνική δύσπνοια, αδυναμία στο ένα χέρι ή στραβό στόμα: καλέστε αμέσως το 166.</b>'],
+ questions:['Ερωτήσεις για τον γιατρό','Όποτε σας έρχεται μια απορία, γράψτε την εδώ. Στο ραντεβού τις έχετε όλες μαζεμένες και γράφετε δίπλα την απάντηση. Βγαίνουν και στην πλήρη αναφορά για τον γιατρό.'],
+ inter:['Αλληλεπιδράσεις','Ορισμένα φάρμακα επηρεάζουν το ένα το άλλο: π.χ. τα αντιφλεγμονώδη ανεβάζουν την πίεση και μαζί με ορισμένα φάρμακα πίεσης μπορούν να βλάψουν τους νεφρούς.<br><br>Η τεχνητή νοημοσύνη ελέγχει όλα τα ενεργά σας φάρμακα μεταξύ τους, με τις αλλεργίες και με τις παθήσεις σας. Ο έλεγχος γίνεται και αυτόματα όταν προσθέτετε νέο φάρμακο.<br><br><b>Είναι βοήθημα, όχι γνωμάτευση.</b> Μη σταματάτε φάρμακα μόνοι σας — ρωτήστε τον γιατρό ή τον φαρμακοποιό.'],
+ rx:['Συνταγή από φωτογραφία','Τραβήξτε φωτογραφία τη συνταγή (ηλεκτρονική ή χειρόγραφη) και η τεχνητή νοημοσύνη βρίσκει όλα τα φάρμακα μαζί. Πριν την προσθήκη ελέγχετε ονόματα, δόσεις και ώρες.'],
+ rxend:['Λήξη συνταγής','Γράψτε μέχρι πότε ισχύει η συνταγή (π.χ. τελευταία επαναλαμβανόμενη). 10 μέρες πριν λήξει βγαίνει υπενθύμιση στην αρχική οθόνη, για να κλείσετε έγκαιρα ραντεβού.'],
+ interval:['Κάθε λίγες ημέρες','Για φάρμακα που δεν παίρνονται κάθε μέρα: π.χ. «κάθε 2 ημέρες» είναι μέρα παρά μέρα, «κάθε 7» μία φορά την εβδομάδα. Η μέτρηση ξεκινά από την ημερομηνία έναρξης.'],
+ people:['Πολλά άτομα','Κρατήστε ξεχωριστό φάκελο για κάθε μέλος της οικογένειας, π.χ. για τον εαυτό σας και για έναν ηλικιωμένο γονιό που φροντίζετε. Κάθε φάκελος έχει δικά του φάρμακα, μετρήσεις και κάρτα. Οι υπενθυμίσεις βγαίνουν για όλους, με το όνομα του καθενός.'],
+ lock:['Κλείδωμα','Με κωδικό 4–8 ψηφίων η εφαρμογή ζητά ξεκλείδωμα όταν ανοίγει και όταν γυρνάτε σε αυτήν μετά από πάνω από 1 λεπτό. Μπορείτε να προσθέσετε δαχτυλικό ή πρόσωπο, αν το υποστηρίζει το κινητό.<br><br><b>Αν ξεχάσετε τον κωδικό</b>, ο μόνος τρόπος είναι διαγραφή και επαναφορά από αντίγραφο ασφαλείας — κρατάτε αντίγραφα!'],
+ emergency:['Έκτακτη ανάγκη','166: ΕΚΑΒ (ασθενοφόρο). 112: ευρωπαϊκός αριθμός έκτακτης ανάγκης, λειτουργεί και χωρίς κάρτα SIM.<br><br>Η <b>εικόνα κλειδωμένης οθόνης</b> δείχνει αλλεργίες, φάρμακα και επαφή στην οθόνη του κινητού χωρίς ξεκλείδωμα, ώστε να τη δουν οι διασώστες αν δεν μπορείτε να μιλήσετε.'],
+ lockimg:['Πώς μπαίνει στην κλειδωμένη οθόνη','<b>Άντροιντ:</b> Ρυθμίσεις → Ταπετσαρία → επιλογή της εικόνας → «Οθόνη κλειδώματος».<br><b>Άιφον:</b> Φωτογραφίες → η εικόνα → κοινοποίηση → «Χρήση ως ταπετσαρία».<br><br>Το πάνω μέρος μένει άδειο για να φαίνεται το ρολόι.'],
+ prev:['Προληπτικοί έλεγχοι','Λίστα εμβολίων και εξετάσεων πρόληψης, ανάλογα με την ηλικία, το φύλο και τις παθήσεις σας. Πατήστε σε κάθε μία για να γράψετε πότε έγινε — η εφαρμογή υπολογίζει πότε είναι η επόμενη και σας ειδοποιεί στην αρχική όταν περάσει.'],
+ ble:['Πιεσόμετρο με ασύρματη σύνδεση','Λειτουργεί με πιεσόμετρα που έχουν ασύρματη σύνδεση (Bluetooth) με το τυπικό πρωτόκολλο πίεσης (πολλά της Omron, A&D, Beurer κ.ά.), μόνο από τον Χρώμιο στο Άντροιντ ή σε υπολογιστή. Πατήστε το κουμπί, επιλέξτε το πιεσόμετρο και κάντε μέτρηση. <b>Δοκιμαστική λειτουργία</b> — αν δεν δουλέψει με το δικό σας, περάστε τη μέτρηση με το χέρι.'],
+ report:['Πλήρης αναφορά','Ένα έγγραφο για το ραντεβού με όλα: στοιχεία, αλλεργίες, φάρμακα με τήρηση, πίεση και άλλες μετρήσεις του μήνα, εξετάσεις με την προηγούμενη τιμή, συμπτώματα και οι ερωτήσεις σας. Εκτυπώνεται ή αποθηκεύεται ως έγγραφο από το μενού εκτύπωσης.'],
+ pill:['Φωτογραφία χαπιού','Μια μικρή φωτογραφία του χαπιού ή του κουτιού, για να ξεχωρίζετε ποιο είναι ποιο. Φαίνεται δίπλα στο φάρμακο στη λίστα της ημέρας.']
+});
 
 /* ---------- Χειρισμός κλικ ---------- */
 let installEvt=null;
@@ -754,6 +1399,10 @@ document.addEventListener('click',async e=>{
   case 'period':D.settings.period=+b.dataset.v;persist();render();break;
   case 'printbp':printBp();break;
   case 'addmed':medForm();break;
+  case 'help':e.preventDefault();e.stopPropagation();helpDlg(b.dataset.k);break;
+  case 'hclose':$('#hdlg').close();break;
+  case 'editf':fieldForm(b.dataset.f);break;
+  case 'alchip':{const ta=$('#dform [name=v]');const v=b.dataset.v;const cur=ta.value.split(/\s*,\s*/).filter(Boolean);if(!cur.includes(v))cur.push(v);ta.value=cur.join(', ');const nk=$('#dform [name=none]');if(nk)nk.checked=false;break}
   case 'checkupd':checkUpdate(true);break;
   case 'whatsnew':showNews(null);break;
   case 'aiphoto':if(!getKey()){askKey();break}$('#camIn').click();break;
@@ -799,7 +1448,7 @@ async function copy(t){try{await navigator.clipboard.writeText(t);toast('Αντ�
 $('#fileIn').addEventListener('change',async e=>{const f=e.target.files[0];if(f)applyRestore(await f.text());e.target.value=''});
 
 /* ---------- Εκκίνηση ---------- */
-function handleTake(tag){if(tag&&/^\d{4}-\d\d-\d\d\|/.test(tag)&&!D.doses[tag])markDose(tag,'taken')}
+function handleTake(tag){if(!tag)return;if(tag.includes('~')){const [pid,k]=tag.split('~');if(pid!==PEOPLE.cur)switchPerson(pid);tag=k}if(/^\d{4}-\d\d-\d\d\|/.test(tag)&&!D.doses[tag])markDose(tag,'taken')}
 if('serviceWorker' in navigator){
  navigator.serviceWorker.register('sw.js').then(r=>{swReg=r}).catch(()=>{});
  navigator.serviceWorker.ready.then(r=>swReg=r).catch(()=>{});
@@ -808,6 +1457,7 @@ if('serviceWorker' in navigator){
 const qp=new URLSearchParams(location.search);
 if(qp.get('take'))handleTake(qp.get('take'));
 if(qp.get('take')||qp.get('v'))history.replaceState(null,'',location.pathname);
+showLock();
 render();
 checkReminders();
 setInterval(checkReminders,30000);

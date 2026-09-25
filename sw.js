@@ -1,4 +1,4 @@
-const VERSION='1.2.0';
+const VERSION='1.4.0';
 const C='fakelos-ygeias-'+VERSION;
 const F=['./','index.html','manifest.json','icon-192.png','icon-512.png','apple-touch-icon.png'];
 self.addEventListener('install',e=>{e.waitUntil(caches.open(C).then(c=>c.addAll(F.map(u=>new Request(u,{cache:'reload'})))).catch(()=>{}));self.skipWaiting()});
