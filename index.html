@@ -102,6 +102,11 @@ svg text{fill:var(--mut);font-size:10px}
 .mbar .chip{white-space:nowrap;flex:none}
 a.tel{color:var(--pri);font-weight:700;text-decoration:none;white-space:nowrap;margin-left:4px}
 .rowset{position:relative}
+.bpm{position:relative;margin:12px 0 4px;cursor:pointer;padding-top:4px}
+.bpbar{display:flex;height:12px;border-radius:6px;overflow:hidden}
+.bpbar span{flex:1}
+.bpm i{position:absolute;top:0;width:8px;height:20px;background:var(--tx);border:2px solid var(--card);border-radius:4px;transform:translateX(-50%)}
+.bplbl{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);margin-top:3px}
 .aibox{background:var(--pri2);border-radius:12px;padding:10px;margin-bottom:12px}
 details summary{cursor:pointer}
 .list-day{margin-top:10px;font-weight:700;font-size:14px;color:var(--mut)}
@@ -116,7 +121,7 @@ details summary{cursor:pointer}
 </style>
 </head>
 <body>
-<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small><div><button id="pbtn" class="pchip" data-act="people">👤</button></div></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
+<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small><div><button id="pbtn" class="pchip" data-act="people">👤</button> <button id="lbtn" class="pchip notr" data-act="lang" aria-label="Γλώσσα">🇬🇷</button></div></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
 <div id="banner"></div>
 <main>
  <section class="tab on" id="t-sim"></section>
@@ -143,10 +148,11 @@ details summary{cursor:pointer}
 <input type="file" id="camIn" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
 
+<script src="i18n.js"></script>
 <script>
 "use strict";
 /* ---------- Βασικά ---------- */
-const APP_VERSION='1.5.0';
+const APP_VERSION='1.6.0';
 const SUB='Fakelos-Ygeias', PKEY='fakelosYgeias_people';
 let PEOPLE=(()=>{try{const x=JSON.parse(localStorage.getItem(PKEY));if(x&&x.list&&x.list.length)return x}catch(e){}return{list:[{id:'p1',key:'fakelosYgeias'}],cur:'p1'}})();
 let KEY=(PEOPLE.list.find(p=>p.id===PEOPLE.cur)||PEOPLE.list[0]).key;
@@ -155,7 +161,35 @@ const pad=n=>String(n).padStart(2,'0');
 const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
 const hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
 const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const u=x=>'<span class="notr">'+esc(x)+'</span>';
 const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+/* ---------- Γλώσσα (ελληνικά / αγγλικά / βουλγαρικά) ---------- */
+const LANGKEY='fakelosYgeias_lang',LANGS=[['el','🇬🇷','Ελληνικά'],['en','🇬🇧','English'],['bg','🇧🇬','Български']];
+let LANG=(()=>{try{const l=localStorage.getItem(LANGKEY);return ['el','en','bg'].includes(l)?l:'el'}catch(e){return 'el'}})();
+let TRX=null;
+function buildTr(){const M=window.I18N||{};const keys=Object.keys(M).filter(k=>M[k]&&M[k][0]!==k).sort((a,b)=>b.length-a.length);if(!keys.length)return;
+ const rx=k=>k.replace(/[.*+?^${}()|[\]\\]/g,'\\$&');TRX=new RegExp('(?<![\\p{L}])(?:'+keys.map(rx).join('|')+')(?![\\p{L}])','gu')}
+const GRK=/[Ͱ-Ͽἀ-῿]/;
+function tr(s){if(LANG==='el'||!TRX||s==null)return s;s=String(s);if(!GRK.test(s))return s;const M=window.I18N,i=LANG==='en'?0:1;return s.replace(TRX,m=>(M[m]&&M[m][i])||m)}
+function trNode(root){if(LANG==='el'||!TRX||!root)return;
+ const doText=t=>{const p=t.parentNode;if(!p||(p.closest&&p.closest('textarea,script,style,.notr')))return;const v=t.data;if(!GRK.test(v))return;const nv=tr(v);if(nv!==v)t.data=nv};
+ const doEl=e=>{if(e.tagName==='OPTION'&&!e.hasAttribute('value'))e.setAttribute('value',e.textContent);for(const a of ['placeholder','title','aria-label']){const v=e.getAttribute(a);if(v&&GRK.test(v)){const nv=tr(v);if(nv!==v)e.setAttribute(a,nv)}}};
+ if(root.nodeType===3){doText(root);return}if(root.nodeType!==1)return;
+ if(root.closest&&root.closest('.notr'))return;doEl(root);
+ const w=document.createTreeWalker(root,NodeFilter.SHOW_TEXT|NodeFilter.SHOW_ELEMENT);while(w.nextNode()){const c=w.currentNode;if(c.nodeType===3)doText(c);else doEl(c)}}
+let MO=null;
+function startTr(){if(LANG==='el')return;buildTr();if(!TRX)return;
+ document.documentElement.lang=LANG;document.title=tr('Φάκελος Υγείας');trNode(document.body);
+ MO=new MutationObserver(ms=>{MO.disconnect();for(const m of ms){if(m.type==='characterData')trNode(m.target);else m.addedNodes.forEach(trNode)}MO.observe(document.body,{childList:true,subtree:true,characterData:true})});
+ MO.observe(document.body,{childList:true,subtree:true,characterData:true});
+ const _a=window.alert.bind(window),_c=window.confirm.bind(window),_p=window.prompt.bind(window);
+ window.alert=m=>_a(tr(m));window.confirm=m=>_c(tr(m));window.prompt=(m,d)=>_p(tr(m),d);
+}
+function langDlg(){openDlg(`<h2>🌐 Γλώσσα</h2>${LANGS.map(([k,f,n])=>`<button type="button" class="wide ${LANG===k?'pri':''}" data-act="setlang" data-v="${k}" style="margin-bottom:8px;font-size:18px"><span class="notr">${f} ${n}</span></button>`).join('')}<div class="acts"><button type="button" data-act="close">Κλείσιμο</button></div>`,()=>{})}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act]');if(!b)return;
+ if(b.dataset.act==='lang')langDlg();
+ if(b.dataset.act==='setlang'){try{localStorage.setItem(LANGKEY,b.dataset.v)}catch(_){}location.reload()}});
+const LANG_AI={en:'English',bg:'Bulgarian'};
 const MERES=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
 const MERES_S=['Κυ','Δε','Τρ','Τε','Πε','Πα','Σα'];
 const MHNES=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
@@ -232,7 +266,7 @@ let TAB='sim';
 function showTab(t){TAB=t;document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();scrollTo(0,0)}
 function render(){
  const n=new Date();$('#hdate').textContent=MERES[n.getDay()]+', '+fmtD(n)+' · έκδ. '+APP_VERSION;
- const pb=$('#pbtn');if(pb)pb.textContent='👤 '+(D.profile.name||'Άτομα')+(PEOPLE.list.length>1?' ▾':'');
+ const lb=$('#lbtn');if(lb)lb.textContent=(LANGS.find(x=>x[0]===LANG)||LANGS[0])[1];const pb=$('#pbtn');if(pb){pb.classList.add('notr');}if(pb)pb.textContent='👤 '+(D.profile.name||tr('Άτομα'))+(PEOPLE.list.length>1?' ▾':'');
  ({sim:rSim,pie:rPie,far:rFar,kar:rKar,per:rPer})[TAB]();
  checkBanner();
 }
@@ -252,12 +286,12 @@ function rSim(){
  if(!D.meds.filter(m=>m.active).length){h+=`<p class="mut">Δεν έχετε καταχωρίσει φάρμακα ακόμη.</p><button class="pri wide" data-act="addmed">+ Προσθήκη φαρμάκου</button></div>`}
  else{
   h+=`<div class="row sp"><div><div class="big">${taken}/${list.length}</div><div class="mut">λήψεις ολοκληρώθηκαν</div></div>`+
-   (next?`<div style="text-align:right"><div class="mut">Επόμενη</div><b style="font-size:20px">${next.time}</b><div>${esc(next.med.name)}</div></div>`:(list.length?`<div class="st" style="color:var(--green)">✓ Όλα εντάξει για σήμερα</div>`:''))+`</div>`;
+   (next?`<div style="text-align:right"><div class="mut">Επόμενη</div><b style="font-size:20px">${next.time}</b><div>${esc(next.med.name)}</div></div>`:(pend.length?`<div class="st" style="color:var(--red)">Εκκρεμούν: ${pend.length}</div>`:(list.length?`<div class="st" style="color:var(--green)">✓ Όλα εντάξει για σήμερα</div>`:'')))+`</div>`;
   list.forEach(i=>{
    const m=i.med,k=doseKey(now,m,i.time),r=D.doses[k];const [a,b]=i.time.split(':').map(Number);
    const late=!r&&nm>a*60+b+30;
    h+=`<div class="dose ${r?'done':''} ${late?'late':''}"><div class="t">${i.time}</div>${m.photo?`<img class="pthumb" src="${m.photo}" alt="">`:''}<div class="grow"><div><b>${medTitle(m)}</b></div>
-    <div class="mut">${esc(m.dose||'')}${m.food?' · '+FOOD[m.food]:''}</div>${m.purpose?`<div class="mut">Για: ${esc(m.purpose)}</div>`:''}
+    <div class="mut">${u(m.dose||'')}${m.food?' · '+FOOD[m.food]:''}</div>${m.purpose?`<div class="mut">Για: ${u(m.purpose)}</div>`:''}
     ${r?`<div class="st" style="color:${r.s==='taken'?'var(--green)':'var(--mut)'}">${r.s==='taken'?'✓ Ελήφθη στις '+r.at:'Παραλείφθηκε'} <button class="small" data-act="undo" data-k="${k}">Αναίρεση</button></div>`
      :`${late?'<div class="st" style="color:var(--red)">Σε καθυστέρηση</div>':''}<div class="row" style="margin-top:6px"><button class="ok small" data-act="take" data-k="${k}">✓ Το πήρα</button><button class="small" data-act="skip" data-k="${k}">Παράλειψη</button></div>`}
    </div></div>`});
@@ -268,7 +302,7 @@ function rSim(){
  const prn=D.meds.filter(m=>m.active&&m.prn);
  if(prn.length){h+=`<div class="card"><h2>Όταν χρειάζεται ${hq('prn')}</h2>`;
   prn.forEach(m=>{const tk=Object.keys(D.doses).filter(k=>k.startsWith(dkey(now)+'|'+m.id+'|prn'));
-   h+=`<div class="dose"><div class="grow"><b>${medTitle(m)}</b><div class="mut">${esc(m.dose||'')}${m.purpose?' · για: '+esc(m.purpose):''}</div>${tk.length?`<div class="mut">Σήμερα: ${tk.map(k=>D.doses[k].at).join(', ')}</div>`:''}</div><button class="small ok" data-act="prn" data-id="${m.id}">Το πήρα τώρα</button></div>`});
+   h+=`<div class="dose"><div class="grow"><b>${medTitle(m)}</b><div class="mut">${u(m.dose||'')}${m.purpose?' · για: '+'<span class="notr">'+esc(m.purpose)+'</span>':''}</div>${tk.length?`<div class="mut">Σήμερα: ${tk.map(k=>D.doses[k].at).join(', ')}</div>`:''}</div><button class="small ok" data-act="prn" data-id="${m.id}">Το πήρα τώρα</button></div>`});
   h+=`</div>`}
  h+=quickCard();
  // Πίεση
@@ -276,17 +310,17 @@ function rSim(){
  h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση ${hq('cats')}</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>`;
  if(last){const c=bpClass(last.sys,last.dia),d=new Date(last.t);
   const tday=D.bp.filter(r=>dkey(new Date(r.t))===dkey(now));
-  h+=`<div class="row" style="margin-top:10px"><span class="pill" style="background:${c.c}"></span><span class="big">${last.sys}/${last.dia}</span>${last.pulse?`<span class="mut">♥ ${last.pulse}</span>`:''}</div>
-   <div class="mut">${c.t} · ${dkey(d)===dkey(now)?'σήμερα':fmtS(d)} ${hm(d)} (${zoneOf(d).n.toLowerCase()})</div>
+  h+=`<div class="row" style="margin-top:10px"><span class="pill" style="background:${c.c}"></span><span class="big">${last.sys}/${last.dia}</span>${last.pulse?`<span class="mut">♥ ${last.pulse}</span>`:''}</div>${bpMeter(last.sys,last.dia,'Τελευταία μέτρηση')}
+   <div class="mut">${c.t} · ${dkey(d)===dkey(now)?'σήμερα':fmtS(d)} ${hm(d)} (${tr(zoneOf(d).n).toLowerCase()})</div>
    <div class="mut">Μετρήσεις σήμερα: ${tday.length}</div>`}
  else h+=`<p class="mut">Καμία μέτρηση ακόμη.</p>`;
  h+=`</div>`;
  // Απόθεμα
  const low=D.meds.filter(m=>m.active&&daysLeft(m)!=null&&daysLeft(m)<=7);
- if(low.length)h+=`<div class="card warn"><h2>Τελειώνουν σύντομα ${hq('stock')}</h2>${low.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.stock} τεμ., περίπου ${daysLeft(m)} ${daysLeft(m)===1?'ημέρα':'ημέρες'}</div>`).join('')}<div class="mut" style="margin-top:6px">Κλείστε συνταγή ή αγοράστε έγκαιρα.</div></div>`;
+ if(low.length)h+=`<div class="card warn"><h2>Τελειώνουν σύντομα ${hq('stock')}</h2>${low.map(m=>`<div>💊 <b>${u(m.name)}</b> — ${m.stock} τεμ., περίπου ${daysLeft(m)} ${daysLeft(m)===1?'ημέρα':'ημέρες'}</div>`).join('')}<div class="mut" style="margin-top:6px">Κλείστε συνταγή ή αγοράστε έγκαιρα.</div></div>`;
  // Ραντεβού
  const up=D.appts.filter(a=>!a.done&&a.d>=dkey(now)&&a.d<=dkey(new Date(Date.now()+14*864e5))).sort((a,b)=>(a.d+a.h)<(b.d+b.h)?-1:1);
- if(up.length)h+=`<div class="card"><h2>Ερχόμενα ραντεβού</h2>${up.map(a=>`<div style="margin-bottom:6px">📅 <b>${fmtS(fromKey(a.d))}${a.h?' '+a.h:''}</b> — ${esc(a.title)}${a.place?' <span class="mut">('+esc(a.place)+')</span>':''}</div>`).join('')}</div>`;
+ if(up.length)h+=`<div class="card"><h2>Ερχόμενα ραντεβού</h2>${up.map(a=>`<div style="margin-bottom:6px">📅 <b>${fmtS(fromKey(a.d))}${a.h?' '+a.h:''}</b> — ${u(a.title)}${a.place?' <span class="mut">('+'<span class="notr">'+esc(a.place)+'</span>'+')</span>':''} ${pinLink(a)}</div>`).join('')}</div>`;
  $('#t-sim').innerHTML=h;
 }
 
@@ -299,7 +333,7 @@ function rBp(){
  if(!st){h+=`<div class="card"><p class="mut">Δεν υπάρχουν μετρήσεις σε αυτό το διάστημα.</p><p class="mut">Συμβουλή: μετράτε καθιστός, με την πλάτη ακουμπισμένη, μετά από 5 λεπτά ξεκούραση, χωρίς καφέ ή κάπνισμα 30 λεπτά πριν. Κάντε 2 μετρήσεις με 1 λεπτό διαφορά, πρωί και βράδυ.</p></div>`;$('#t-pie').innerHTML=h;return}
  const c=bpClass(st.sys,st.dia);
  h+=`<div class="card"><h2>Μέσος όρος ${hq('avg')}</h2><div class="row"><span class="pill" style="background:${c.c}"></span><span class="big">${st.sys}/${st.dia}</span>${st.pulse?`<span class="mut">♥ ${st.pulse}</span>`:''}</div>
- <div class="mut">${c.t} · ${st.n} μετρήσεις</div>
+ <div class="mut">${c.t} · ${st.n} μετρήσεις</div>${bpMeter(st.sys,st.dia,'Μέσος όρος')}
  <div class="g2" style="margin-top:10px"><div><div class="mut">Μεγάλη</div><b>${st.minS} – ${st.maxS}</b></div><div><div class="mut">Μικρή</div><b>${st.minD} – ${st.maxD}</b></div></div>
  <div class="mut" style="margin-top:6px">Πάνω από 135/85: ${st.high} από ${st.n} (${Math.round(st.high/st.n*100)}%)</div></div>`;
  // Ανά ζώνη
@@ -319,7 +353,7 @@ function rBp(){
  list.forEach(r=>{const d=new Date(r.t),k=dkey(d);
   if(k!==cur){cur=k;const dl=list.filter(x=>dkey(new Date(x.t))===k),s=bpStats(dl);h+=`<div class="list-day">${MERES[d.getDay()]} ${fmtS(d)}${dl.length>1?` · Μ.Ο. ${s.sys}/${s.dia}`:''}</div>`}
   const c=bpClass(r.sys,r.dia);
-  h+=`<div class="dose"><div class="t" style="font-size:15px">${hm(d)}<div class="mut" style="font-weight:400;font-size:12px">${zoneOf(d).n}</div></div><div class="grow"><div><span class="pill" style="background:${c.c}"></span><span class="bpv">${r.sys}/${r.dia}</span>${r.pulse?` <span class="mut">♥ ${r.pulse}</span>`:''}</div><div class="mut">${c.t}${r.arm?' · '+esc(r.arm)+' χέρι':''}${r.pos?' · '+esc(r.pos):''}</div>${r.sym&&r.sym.length?`<div class="mut">Συμπτώματα: ${r.sym.map(esc).join(', ')}</div>`:''}${r.note?`<div class="mut">${esc(r.note)}</div>`:''}</div><button class="small" data-act="editbp" data-id="${r.id}">✎</button></div>`});
+  h+=`<div class="dose"><div class="t" style="font-size:15px">${hm(d)}<div class="mut" style="font-weight:400;font-size:12px">${zoneOf(d).n}</div></div><div class="grow"><div><span class="pill" style="background:${c.c}"></span><span class="bpv">${r.sys}/${r.dia}</span>${r.pulse?` <span class="mut">♥ ${r.pulse}</span>`:''}</div><div class="mut">${c.t}${r.arm?' · '+esc(r.arm)+' χέρι':''}${r.pos?' · '+esc(r.pos):''}</div>${r.sym&&r.sym.length?`<div class="mut">Συμπτώματα: ${r.sym.map(esc).join(', ')}</div>`:''}${r.note?`<div class="mut">${u(r.note)}</div>`:''}</div><button class="small" data-act="editbp" data-id="${r.id}">✎</button></div>`});
  h+=`</div>`;
  $('#t-pie').innerHTML=h;
 }
@@ -348,7 +382,7 @@ function rFar(){
  <div class="row" style="margin-top:10px"><button class="grow" data-act="rxphoto">📄 Φωτογραφία συνταγής</button> ${hq('rx')}</div></div>`+interCard();
  if(view==='hist'){
   const ev=[];D.meds.forEach(m=>(m.history||[]).forEach(e=>ev.push({m,e})));ev.sort((a,b)=>a.e.t<b.e.t?1:-1);
-  h+=`<div class="card"><h2>Όλες οι αλλαγές</h2>${ev.length?ev.map(({m,e})=>`<div class="dose"><div class="t" style="font-size:13px;min-width:78px">${fmtS(new Date(e.t))}</div><div class="grow"><b>${esc(m.name)}</b><div class="mut">${esc(e.text)}</div></div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}</div>`;
+  h+=`<div class="card"><h2>Όλες οι αλλαγές</h2>${ev.length?ev.map(({m,e})=>`<div class="dose"><div class="t" style="font-size:13px;min-width:78px">${fmtS(new Date(e.t))}</div><div class="grow"><b>${u(m.name)}</b><div class="mut">${esc(e.text)}</div></div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}</div>`;
   $('#t-far').innerHTML=h;return;
  }
  const list=view==='active'?act:stp;
@@ -356,15 +390,15 @@ function rFar(){
  list.sort((a,b)=>a.name.localeCompare(b.name,'el')).forEach(m=>{
   const ad=m.active&&!m.prn?adherence(m,30):null,dl=m.active?daysLeft(m):null;
   h+=`<div class="card"><div class="row sp">${m.photo?`<img class="pthumb" style="width:52px;height:52px" src="${m.photo}" alt="">`:''}<div class="grow"><div style="font-size:18px"><b>${medTitle(m)}</b></div>${m.substance?`<div class="mut">Δραστική ουσία: ${esc(m.substance)}</div>`:''}</div>${m.form?`<span class="tag">${esc(m.form)}</span>`:''}</div>
-  ${m.purpose?`<div style="margin-top:6px"><b>Τι κάνει / για τι:</b> ${esc(m.purpose)}</div>`:''}
-  <div style="margin-top:6px">${m.dose?`<span class="tag">${esc(m.dose)}</span>`:''}${m.prn?'<span class="tag">όταν χρειάζεται</span>':(m.times||[]).map(t=>`<span class="tag">⏰ ${t}</span>`).join('')}${m.days&&m.days.length&&m.days.length<7?`<span class="tag">${m.days.map(d=>MERES_S[d]).join(' ')}</span>`:''}${m.food?`<span class="tag">${FOOD[m.food]}</span>`:''}</div>
-  <div class="mut" style="margin-top:6px">${m.doctor?'Γιατρός: '+esc(m.doctor)+' · ':''}${m.start?'Από '+fmtS(fromKey(m.start)):''}${m.until?' έως '+fmtS(fromKey(m.until)):''}${!m.active&&m.end?' · Διακοπή '+fmtS(fromKey(m.end)):''}</div>
+  ${m.purpose?`<div style="margin-top:6px"><b>Τι κάνει / για τι:</b> ${u(m.purpose)}</div>`:''}
+  <div style="margin-top:6px">${m.dose?`<span class="tag">${u(m.dose)}</span>`:''}${m.prn?'<span class="tag">όταν χρειάζεται</span>':(m.times||[]).map(t=>`<span class="tag">⏰ ${t}</span>`).join('')}${m.days&&m.days.length&&m.days.length<7?`<span class="tag">${m.days.map(d=>MERES_S[d]).join(' ')}</span>`:''}${m.food?`<span class="tag">${FOOD[m.food]}</span>`:''}</div>
+  <div class="mut" style="margin-top:6px">${m.doctor?'Γιατρός: '+'<span class="notr">'+esc(m.doctor)+'</span>'+' · ':''}${m.start?'Από '+fmtS(fromKey(m.start)):''}${m.until?' έως '+fmtS(fromKey(m.until)):''}${!m.active&&m.end?' · Διακοπή '+fmtS(fromKey(m.end)):''}</div>
   ${m.active&&m.rxEnd?`<div class="mut" style="${m.rxEnd<=dkey(new Date(Date.now()+10*864e5))?'color:var(--red);font-weight:600':''}">Η συνταγή λήγει: ${fmtS(fromKey(m.rxEnd))} ${hq('rxend')}</div>`:''}
-  ${!m.active&&m.endReason?`<div class="mut">Λόγος διακοπής: ${esc(m.endReason)}</div>`:''}
-  ${m.sideEffects?`<details style="margin-top:6px"><summary><b>Παρενέργειες</b></summary><div class="mut">${esc(m.sideEffects)}</div></details>`:''}
-  ${m.warnings?`<details style="margin-top:4px"><summary><b>Προσοχή / αλληλεπιδράσεις</b></summary><div class="mut">${esc(m.warnings)}</div></details>`:''}
+  ${!m.active&&m.endReason?`<div class="mut">Λόγος διακοπής: ${u(m.endReason)}</div>`:''}
+  ${m.sideEffects?`<details style="margin-top:6px"><summary><b>Παρενέργειες</b></summary><div class="mut">${u(m.sideEffects)}</div></details>`:''}
+  ${m.warnings?`<details style="margin-top:4px"><summary><b>Προσοχή / αλληλεπιδράσεις</b></summary><div class="mut">${u(m.warnings)}</div></details>`:''}
   ${m.ai?`<div class="mut" style="font-size:12px;margin-top:4px">🤖 Πληροφορίες από τεχνητή νοημοσύνη — επιβεβαιώστε με το φύλλο οδηγιών ή τον φαρμακοποιό.</div>`:''}
-  ${m.notes?`<div class="mut">Σημειώσεις: ${esc(m.notes)}</div>`:''}
+  ${m.notes?`<div class="mut">Σημειώσεις: ${u(m.notes)}</div>`:''}
   ${dl!=null?`<div class="mut" style="${dl<=7?'color:var(--red);font-weight:600':''}">Απόθεμα: ${m.stock} τεμ. (≈ ${dl} ημέρες) ${hq('stock')}</div>`:''}
   ${ad!=null?`<div class="mut">Τήρηση 30 ημερών: <b>${ad}%</b> ${hq('adherence')}</div>`:''}
   <div class="row" style="margin-top:10px"><button class="small" data-act="editmed" data-id="${m.id}">✎ Επεξεργασία</button>${m.active?`<button class="small danger" data-act="stopmed" data-id="${m.id}">Διακοπή</button>`:`<button class="small" data-act="restartmed" data-id="${m.id}">Επανέναρξη</button>`}<button class="small" data-act="histmed" data-id="${m.id}">Ιστορικό</button></div></div>`});
@@ -379,14 +413,14 @@ function rKar(){
  let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Κάρτα για γιατρό / νοσοκομείο ${hq('card')}</h2></div><div class="mut" style="margin-top:4px">Πατήστε πάνω σε οποιοδήποτε πεδίο για να το συμπληρώσετε.</div><div class="row" style="margin-top:10px"><button class="small" data-act="bigtext">🔍 Μεγάλα γράμματα</button><button class="small" data-act="sharecard">📤 Αποστολή</button><button class="small" data-act="copycard">📋 Αντιγραφή</button><button class="small" data-act="printcard">🖨 Εκτύπωση</button><button class="small" data-act="report">📑 Πλήρης αναφορά</button></div></div>`+emergCard();
  h+=`<div class="card hcard ${D.settings.bigtext?'bigtxt':''}">`;
  if(!p.name)h+=`<p class="mut">Συμπληρώστε τα στοιχεία σας για να είναι πλήρης η κάρτα.</p>`;
- h+=`<div class="edf" data-act="profile"><span class="pen">✎</span><div style="font-size:1.25em;font-weight:700">${esc(p.name||'—')}</div>
+ h+=`<div class="edf" data-act="profile"><span class="pen">✎</span><div style="font-size:1.25em;font-weight:700">${u(p.name||'—')}</div>
  <div class="mut">${p.birth?'Γέννηση: '+fmtS(fromKey(p.birth))+' ('+ageOf()+' ετών)':''}${p.amka?' · ΑΜΚΑ: '+esc(p.amka):''}${p.blood?' · Ομάδα αίματος: <b>'+esc(p.blood)+'</b>':''}${!p.birth&&!p.amka&&!p.blood?'<span class="ph noprint">πατήστε για ηλικία, ΑΜΚΑ, ομάδα αίματος</span>':''}</div>
  ${p.height||p.weight?`<div class="mut">${p.height?'Ύψος '+p.height+' εκ.':''}${p.weight?' · Βάρος '+p.weight+' κιλά':''}</div>`:''}</div>
  <div class="lbl">ΑΛΛΕΡΓΙΕΣ ${hq('allergies')}</div><div class="edf" data-act="editf" data-f="allergies"><span class="pen">✎</span><div class="al">${p.allergies?esc(p.allergies):(p.noAllergy?'Καμία γνωστή':'<span class="ph">Δεν έχει δηλωθεί — πατήστε για συμπλήρωση</span>')}</div></div>
  ${edSec('conditions','ΠΑΘΗΣΕΙΣ / ΙΣΤΟΡΙΚΟ')}
  <div class="lbl">ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ (${act.length}) ${hq('cardmeds')}</div>`;
- h+=act.length?`<table><tr><th>Φάρμακο</th><th>Δόση</th><th>Πότε</th></tr>${act.map(m=>`<tr><td><b>${esc(m.name)}</b> ${esc(m.strength||'')}${m.purpose?`<div class="mut">${esc(m.purpose)}</div>`:''}</td><td>${esc(m.dose||'')}</td><td>${esc(freqText(m))}${m.food?`<div class="mut">${FOOD[m.food]}</div>`:''}</td></tr>`).join('')}</table>`:'<div>Κανένα</div>';
- if(rs.length)h+=`<div class="lbl">ΔΙΑΚΟΠΗ ΤΟΥΣ ΤΕΛΕΥΤΑΙΟΥΣ 3 ΜΗΝΕΣ</div>${rs.map(m=>`<div>${esc(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+esc(m.endReason)+')':''}</div>`).join('')}`;
+ h+=act.length?`<table><tr><th>Φάρμακο</th><th>Δόση</th><th>Πότε</th></tr>${act.map(m=>`<tr><td><b>${u(m.name)}</b> ${esc(m.strength||'')}${m.purpose?`<div class="mut">${u(m.purpose)}</div>`:''}</td><td>${u(m.dose||'')}</td><td>${esc(freqText(m))}${m.food?`<div class="mut">${FOOD[m.food]}</div>`:''}</td></tr>`).join('')}</table>`:'<div>Κανένα</div>';
+ if(rs.length)h+=`<div class="lbl">ΔΙΑΚΟΠΗ ΤΟΥΣ ΤΕΛΕΥΤΑΙΟΥΣ 3 ΜΗΝΕΣ</div>${rs.map(m=>`<div>${u(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+'<span class="notr">'+esc(m.endReason)+'</span>'+')':''}</div>`).join('')}`;
  if(bi)h+=`<div class="lbl">ΠΙΕΣΗ</div><div>Τελευταία: <b>${bi.last.sys}/${bi.last.dia}</b>${bi.last.pulse?' ♥ '+bi.last.pulse:''} (${fmtS(new Date(bi.last.t))} ${hm(new Date(bi.last.t))})${bi.w?` · Μ.Ο. 7 ημερών: <b>${bi.w.sys}/${bi.w.dia}</b>`:''}</div>`;
  h+=listSec('contacts','ΕΠΑΦΕΣ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ')+listSec('doctors','ΟΙ ΓΙΑΤΡΟΙ ΜΟΥ')+edSec('other','ΑΛΛΑ (βηματοδότης, εμφυτεύματα…)');
  h+=`<div class="mut" style="margin-top:10px">Ενημέρωση: ${fmtS(new Date())}</div></div><button class="wide" data-act="profile">✎ Επεξεργασία στοιχείων</button>`;
@@ -412,7 +446,7 @@ function rPer(){
  const permT={granted:'ενεργές',denied:'αποκλεισμένες από τις ρυθμίσεις του κινητού',default:'ανενεργές',none:'δεν υποστηρίζονται σε αυτή τη συσκευή'}[perm];
  const ap=D.appts.slice().sort((a,b)=>(a.d+(a.h||''))<(b.d+(b.h||''))?-1:1),today=dkey(new Date());
  const fut=ap.filter(a=>a.d>=today&&!a.done),past=ap.filter(a=>a.d<today||a.done).reverse();
- const apRow=a=>`<div class="dose ${a.done?'done':''}"><div class="t" style="font-size:14px;min-width:84px">${fmtS(fromKey(a.d))}<div class="mut" style="font-weight:400">${a.h||''}</div></div><div class="grow"><b>${esc(a.title)}</b>${a.place?`<div class="mut">${esc(a.place)}</div>`:''}${a.note?`<div class="mut">${esc(a.note)}</div>`:''}</div><button class="small" data-act="editappt" data-id="${a.id}">✎</button></div>`;
+ const apRow=a=>`<div class="dose ${a.done?'done':''}"><div class="t" style="font-size:14px;min-width:84px">${fmtS(fromKey(a.d))}<div class="mut" style="font-weight:400">${a.h||''}</div></div><div class="grow"><b>${u(a.title)}</b>${a.place?`<div class="mut">${u(a.place)}</div>`:''}${apptExtra(a)}${a.note?`<div class="mut">${u(a.note)}</div>`:''}</div><button class="small" data-act="editappt" data-id="${a.id}">✎</button></div>`;
  let h=`<div class="card"><h2>Προσωπικά στοιχεία ${hq('body')}</h2><div class="mut">Όνομα, ηλικία, ύψος, βάρος, αλλεργίες, παθήσεις, ομάδα αίματος, επαφή έκτακτης ανάγκης.</div><div class="row" style="margin-top:8px"><button class="grow" data-act="profile">✎ Επεξεργασία</button><button class="grow" data-act="people">👥 Άτομα (${PEOPLE.list.length})</button></div></div>
  ${symCard()}${qCard()}
  <div class="card"><div class="row sp"><div class="grow"><b>📑 Πλήρης αναφορά για γιατρό</b> ${hq('report')}</div><button class="pri small" data-act="report">Δημιουργία</button></div></div>
@@ -440,7 +474,7 @@ function rPer(){
  <button class="wide" data-act="ics">📅 Προσθήκη στο ημερολόγιο του κινητού</button>
  <p class="mut">Αν αλλάξετε ώρες ή φάρμακα, διαγράψτε τα παλιά συμβάντα από το ημερολόγιο και ξαναπατήστε το κουμπί.</p></div>
  <div class="card"><h2>Αντίγραφα ασφαλείας ${hq('backup')}</h2><div class="mut" id="bkinfo">…</div>
- <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button class="small" data-act="clearfolder">✕ Αλλαγή φακέλου</button></div></div>
+ <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button data-act="pickfolder">📁 Επιλογή φακέλου</button><button class="small" data-act="clearfolder">✕ Ξεχάστε τον φάκελο</button></div></div>
  <div class="card"><h2>Εγκατάσταση στο κινητό</h2><div class="mut">Άντροιντ (Χρώμιο): μενού ⋮ → «Προσθήκη στην αρχική οθόνη» ή «Εγκατάσταση εφαρμογής».<br>Άιφον (Σαφάρι): κουμπί κοινοποίησης → «Προσθήκη στην οθόνη Αφετηρίας».</div>${installEvt?'<button class="pri wide" style="margin-top:8px" data-act="install">Εγκατάσταση</button>':''}</div>
  <div class="card"><h2>Σημαντικό</h2><div class="mut">Τα δεδομένα μένουν μόνο στο κινητό σας και στον φάκελο αντιγράφων — δεν στέλνονται πουθενά. Η εφαρμογή βοηθά στην καταγραφή και δεν αντικαθιστά τον γιατρό σας. Μην αλλάζετε ή διακόπτετε φάρμακα χωρίς οδηγία γιατρού.</div>
  <button class="small danger" style="margin-top:10px" data-act="wipe">Διαγραφή όλων των δεδομένων</button></div>`;
@@ -527,12 +561,12 @@ function medForm(m){
  });
 }
 function stopForm(m){
- openDlg(`<h2>Διακοπή: ${esc(m.name)} ${hq('stop')}</h2><label>Ημερομηνία διακοπής<input type="date" name="end" required value="${dkey(new Date())}"></label><label>Λόγος<input name="reason" placeholder="π.χ. οδηγία γιατρού, παρενέργεια, τέλος θεραπείας"></label><p class="mut">Το φάρμακο θα μετακινηθεί στη λίστα «Διακοπή» και θα κρατηθεί στο ιστορικό.</p>${btns()}`,
+ openDlg(`<h2>Διακοπή: ${u(m.name)} ${hq('stop')}</h2><label>Ημερομηνία διακοπής<input type="date" name="end" required value="${dkey(new Date())}"></label><label>Λόγος<input name="reason" placeholder="π.χ. οδηγία γιατρού, παρενέργεια, τέλος θεραπείας"></label><p class="mut">Το φάρμακο θα μετακινηθεί στη λίστα «Διακοπή» και θα κρατηθεί στο ιστορικό.</p>${btns()}`,
  fd=>{m.active=false;m.end=fd.get('end');m.endReason=fd.get('reason').trim();addHist(m,'Διακοπή'+(m.endReason?': '+m.endReason:''));save();render();toast('Το φάρμακο διακόπηκε')});
 }
 function histDlg(m){
  const hs=(m.history||[]).slice().reverse();
- openDlg(`<h2>Ιστορικό: ${esc(m.name)}</h2>${hs.length?hs.map(e=>`<div class="dose"><div class="t" style="font-size:13px;min-width:82px">${fmtS(new Date(e.t))}</div><div class="grow">${esc(e.text)}</div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}
+ openDlg(`<h2>Ιστορικό: ${u(m.name)}</h2>${hs.length?hs.map(e=>`<div class="dose"><div class="t" style="font-size:13px;min-width:82px">${fmtS(new Date(e.t))}</div><div class="grow">${esc(e.text)}</div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}
  ${!m.prn?`<p class="mut">Τήρηση: 7 ημέρες ${adherence(m,7)??'—'}% · 30 ημέρες ${adherence(m,30)??'—'}%</p>`:''}<div class="acts"><button type="button" class="pri" data-act="close">Κλείσιμο</button></div>`,()=>{});
 }
 function profileForm(){
@@ -552,7 +586,7 @@ function profileForm(){
  <label>Άλλα (βηματοδότης, εμφυτεύματα, κ.λπ.)<textarea name="other">${esc(p.other||'')}</textarea></label>${btns()}`,
  fd=>{['name','birth','blood','amka','allergies','conditions','other','sex','activity'].forEach(k=>p[k]=(fd.get(k)||'').trim());p.height=+fd.get('height')||'';p.weight=+fd.get('weight')||'';['smoker','diabetes','kidney','heart'].forEach(k=>p[k]=!!fd.get(k));save();render();toast('Αποθηκεύτηκε')});
 }
-function apptForm(a){
+function apptForm_old(a){
  const n=!a;a=a||{};
  openDlg(`<h2>${n?'Νέο ραντεβού / εξέταση':'Επεξεργασία'}</h2>
  <label>Τι<input name="title" required value="${esc(a.title||'')}" placeholder="π.χ. Καρδιολόγος, αιματολογικές"></label>
@@ -581,6 +615,7 @@ function undoDose(k){
 /* ---------- Ειδοποιήσεις ---------- */
 let swReg=null;
 async function notif(title,body,tag,actions){
+ title=tr(title);body=tr(body);
  if(!('Notification' in window)||Notification.permission!=='granted')return false;
  try{const o={body,tag,icon:'icon-192.png',badge:'icon-192.png',requireInteraction:true,renotify:true,vibrate:[300,150,300],data:{tag}};
   if(actions)o.actions=actions;
@@ -708,6 +743,7 @@ async function freeModels(force){
 }
 async function aiCall(content,models){
  let last='';
+ if(LANG!=='el'&&LANG_AI[LANG]){let done=false;content=content.map(c=>{if(!done&&c.type==='text'){done=true;return Object.assign({},c,{text:c.text+'\n\nIMPORTANT: write every human-readable text value in '+LANG_AI[LANG]+' (keep JSON keys and code values such as prin/me/meta/ok/minor unchanged).'})}return c})}
  for(const model of models){
   try{
    const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+getKey(),'Content-Type':'application/json','X-Title':'Fakelos Ygeias'},
@@ -776,7 +812,7 @@ function personalCard(st){
  h+=`</div>`;
  if(st){
   const inT=st.sys<=t.s[1]&&st.dia<=t.d[1],low=st.sys<t.s[0]-15;
-  h+=`<div class="meter"><i style="left:${meterPos(st.sys)}%"></i></div><div class="mut" style="display:flex;justify-content:space-between;font-size:12px"><span>χαμηλή</span><span>φυσιολογική</span><span>υψηλή</span></div>`;
+  h+=bpMeter(st.sys,st.dia,'Μέσος όρος');
   h+=`<div style="margin-top:8px">Ο μέσος όρος σας <b>${st.sys}/${st.dia}</b> ${inT?(low?'είναι χαμηλότερος από τον συνήθη στόχο — αν έχετε ζάλη, ενημερώστε τον γιατρό.':'<b style="color:var(--green)">είναι μέσα στον στόχο</b>. 👍'):`<b style="color:var(--orange)">είναι πάνω από τον στόχο</b> κατά ${Math.max(0,st.sys-t.s[1])} στη μεγάλη${st.dia>t.d[1]?' και '+(st.dia-t.d[1])+' στη μικρή':''}.`}</div>`;
   if(b&&+p.weight>b.max&&!inT){const kg=Math.round(+p.weight-b.max);h+=`<div class="mut" style="margin-top:6px">⚖️ Αν φτάσετε τα ${b.max} κιλά (−${kg}), η μεγάλη πίεση μπορεί να πέσει περίπου ${kg} μονάδες ${hq('weightbp')}</div>`}
  }
@@ -1005,7 +1041,7 @@ function rVital(type){
  h+=`</div>`;
  const refs={glu:[{v:D.profile.diabetes?130:100,c:'var(--mut)'},{v:70,c:'var(--blue)'}],temp:[{v:37.5}],spo2:[{v:95}],waist:[{v:D.profile.sex==='f'?80:94}],wt:body()?[{v:body().max}]:[]}[type];
  h+=`<div class="card"><h2>Γράφημα</h2>${lineChart([{pts:list,c:'var(--pri)'}],refs)}</div>`;
- h+=`<div class="card"><h2>Μετρήσεις</h2>${list.map(r=>{const d=new Date(r.t),k=V.cls(r.v,r.ctx);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><span class="pill" style="background:${k.c}"></span><b>${fmtNum(r.v)} ${V.u}</b><div class="mut">${k.t}${r.ctx?' · '+esc(r.ctx):''}</div>${r.note?`<div class="mut">${esc(r.note)}</div>`:''}</div><button class="small" data-act="editvital" data-id="${r.id}">✎</button></div>`}).join('')}</div>`;
+ h+=`<div class="card"><h2>Μετρήσεις</h2>${list.map(r=>{const d=new Date(r.t),k=V.cls(r.v,r.ctx);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><span class="pill" style="background:${k.c}"></span><b>${fmtNum(r.v)} ${V.u}</b><div class="mut">${k.t}${r.ctx?' · '+esc(r.ctx):''}</div>${r.note?`<div class="mut">${u(r.note)}</div>`:''}</div><button class="small" data-act="editvital" data-id="${r.id}">✎</button></div>`}).join('')}</div>`;
  return h;
 }
 
@@ -1122,7 +1158,7 @@ function symForm(r){
 }
 function symCard(){const l=D.symptoms.slice().sort((a,b)=>a.t<b.t?1:-1);
  return `<div class="card"><div class="row sp"><h2 style="margin:0">🤒 Συμπτώματα ${hq('symptoms')}</h2><button class="pri small" data-act="addsym">+ Νέο</button></div>
- ${l.length?l.slice(0,15).map(s=>{const d=new Date(s.t),c=symCtx(s);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><b>${esc(s.what)}</b> <span class="tag">ένταση ${s.sev}/5</span>${s.dur?`<div class="mut">Διάρκεια: ${esc(s.dur)}</div>`:''}${c.meds.length?`<div class="mut">💊 ${esc(c.meds.join(' · '))}</div>`:''}${c.bp?`<div class="mut">❤️ Πίεση κοντά σε εκείνη την ώρα: ${c.bp.sys}/${c.bp.dia}</div>`:''}${s.note?`<div class="mut">${esc(s.note)}</div>`:''}</div><button class="small" data-act="editsym" data-id="${s.id}">✎</button></div>`}).join(''):'<p class="mut">Δεν έχουν καταγραφεί συμπτώματα.</p>'}</div>`}
+ ${l.length?l.slice(0,15).map(s=>{const d=new Date(s.t),c=symCtx(s);return `<div class="dose"><div class="t" style="font-size:14px;min-width:84px">${fmtS(d)}<div class="mut" style="font-weight:400">${hm(d)}</div></div><div class="grow"><b>${u(s.what)}</b> <span class="tag">ένταση ${s.sev}/5</span>${s.dur?`<div class="mut">Διάρκεια: ${u(s.dur)}</div>`:''}${c.meds.length?`<div class="mut">💊 ${esc(c.meds.join(' · '))}</div>`:''}${c.bp?`<div class="mut">❤️ Πίεση κοντά σε εκείνη την ώρα: ${c.bp.sys}/${c.bp.dia}</div>`:''}${s.note?`<div class="mut">${u(s.note)}</div>`:''}</div><button class="small" data-act="editsym" data-id="${s.id}">✎</button></div>`}).join(''):'<p class="mut">Δεν έχουν καταγραφεί συμπτώματα.</p>'}</div>`}
 
 /* ---------- Ερωτήσεις για τον γιατρό ---------- */
 function qForm(r){r=r||{};
@@ -1135,8 +1171,8 @@ function qForm(r){r=r||{};
 }
 function qCard(){const open=D.questions.filter(q=>!q.done),done=D.questions.filter(q=>q.done).slice(-10).reverse();
  return `<div class="card"><div class="row sp"><h2 style="margin:0">❓ Ερωτήσεις για τον γιατρό ${hq('questions')}</h2><button class="pri small" data-act="addq">+ Νέα</button></div>
- ${open.length?open.map(q=>`<div class="dose edf" data-act="editq" data-id="${q.id}"><div class="grow">• ${esc(q.text)}</div><span class="pen">✎</span></div>`).join(''):'<p class="mut">Καμία ανοιχτή ερώτηση. Γράψτε ό,τι σας έρχεται στο μυαλό, για να το έχετε στο ραντεβού.</p>'}
- ${done.length?`<h3>Απαντημένες</h3>${done.map(q=>`<div class="dose done edf" data-act="editq" data-id="${q.id}"><div class="grow">✓ ${esc(q.text)}${q.ans?`<div class="mut">→ ${esc(q.ans)}</div>`:''}</div></div>`).join('')}`:''}</div>`}
+ ${open.length?open.map(q=>`<div class="dose edf" data-act="editq" data-id="${q.id}"><div class="grow">• ${u(q.text)}</div><span class="pen">✎</span></div>`).join(''):'<p class="mut">Καμία ανοιχτή ερώτηση. Γράψτε ό,τι σας έρχεται στο μυαλό, για να το έχετε στο ραντεβού.</p>'}
+ ${done.length?`<h3>Απαντημένες</h3>${done.map(q=>`<div class="dose done edf" data-act="editq" data-id="${q.id}"><div class="grow">✓ ${u(q.text)}${q.ans?`<div class="mut">→ ${u(q.ans)}</div>`:''}</div></div>`).join('')}`:''}</div>`}
 
 /* ---------- Αλληλεπιδράσεις ---------- */
 function medsSig(){return D.meds.filter(m=>m.active).map(m=>m.name).sort().join('|')}
@@ -1187,10 +1223,10 @@ async function rxRun(file){
   if(!meds.length){if(st())st().textContent='✕ Δεν βρέθηκαν φάρμακα. Τραβήξτε τη συνταγή ίσια, ολόκληρη και με καλό φως.';return}
   const f=$('#dform');if(!f)return;
   f.innerHTML=`<h2>📄 Βρέθηκαν ${meds.length} φάρμακα</h2>${r.doctor?`<div class="mut">Γιατρός: ${esc(r.doctor)}</div>`:''}<div class="mut">Ελέγξτε ονόματα, δόσεις και ώρες. Ξετσεκάρετε ό,τι δεν θέλετε.</div>
-  ${meds.map((m,i)=>`<fieldset><legend><label class="ck" style="margin:0"><input type="checkbox" name="k" value="${i}" checked> <b>${esc(m.name)}</b></label></legend>
+  ${meds.map((m,i)=>`<fieldset><legend><label class="ck" style="margin:0"><input type="checkbox" name="k" value="${i}" checked> <b>${u(m.name)}</b></label></legend>
    <div class="g2"><label>Όνομα<input name="n${i}" value="${esc(m.name)}"></label><label>Περιεκτικότητα<input name="s${i}" value="${esc(m.strength||'')}"></label></div>
    <div class="g2"><label>Δόση<input name="d${i}" value="${esc(m.dose||'')}"></label><label>Ώρες (με κόμμα)<input name="t${i}" value="${(TPD[+m.timesPerDay]||TPD[1]).join(', ')}"></label></div>
-   <label>Διάρκεια (ημέρες, κενό = συνεχώς)<input name="u${i}" inputmode="numeric" value="${m.durationDays||''}"></label>${m.purpose?`<div class="mut">${esc(m.purpose)}</div>`:''}</fieldset>`).join('')}
+   <label>Διάρκεια (ημέρες, κενό = συνεχώς)<input name="u${i}" inputmode="numeric" value="${m.durationDays||''}"></label>${m.purpose?`<div class="mut">${u(m.purpose)}</div>`:''}</fieldset>`).join('')}
   <div class="mut" style="font-size:12px">🤖 Μπορεί να υπάρχουν λάθη ανάγνωσης — συγκρίνετε με τη συνταγή. Ώρες και δόσεις όπως σας είπε ο γιατρός.</div>
   <div class="acts"><button type="button" data-act="close">Άκυρο</button><button class="pri" type="submit">Προσθήκη επιλεγμένων</button></div>`;
   f.onsubmit=e=>{e.preventDefault();const fd=new FormData(f),today=dkey(new Date());let n=0;
@@ -1240,8 +1276,8 @@ async function lockImage(){
  const p=D.profile,W=1080,H=2400,c=document.createElement('canvas');c.width=W;c.height=H;const x=c.getContext('2d');
  x.fillStyle='#111';x.fillRect(0,0,W,H);
  let y=Math.round(H*0.36);const M=70,F='system-ui,-apple-system,Roboto,sans-serif';
- x.fillStyle='#c62828';x.fillRect(0,y,W,120);x.fillStyle='#fff';x.font=`bold 58px ${F}`;x.textAlign='center';x.fillText('⚕ ΣΕ ΠΕΡΙΠΤΩΣΗ ΑΝΑΓΚΗΣ',W/2,y+80);x.textAlign='left';y+=180;
- const line=(t,size,col,bold)=>{x.font=`${bold?'bold ':''}${size}px ${F}`;x.fillStyle=col||'#fff';wrapText(x,t,W-2*M).forEach(l=>{if(y<H-120){x.fillText(l,M,y);y+=size*1.28}})};
+ x.fillStyle='#c62828';x.fillRect(0,y,W,120);x.fillStyle='#fff';x.font=`bold 58px ${F}`;x.textAlign='center';x.fillText(tr('⚕ ΣΕ ΠΕΡΙΠΤΩΣΗ ΑΝΑΓΚΗΣ'),W/2,y+80);x.textAlign='left';y+=180;
+ const line=(t,size,col,bold)=>{t=tr(String(t));x.font=`${bold?'bold ':''}${size}px ${F}`;x.fillStyle=col||'#fff';wrapText(x,t,W-2*M).forEach(l=>{if(y<H-120){x.fillText(l,M,y);y+=size*1.28}})};
  const lbl=t=>{y+=14;line(t,34,'#9aa8a4',true)};
  line((p.name||'—')+(ageOf()!=null?', '+ageOf()+' ετών':''),60,'#fff',true);
  if(p.blood)line('Ομάδα αίματος: '+p.blood,44,'#fff');
@@ -1250,7 +1286,7 @@ async function lockImage(){
  const act=D.meds.filter(m=>m.active);lbl('ΦΑΡΜΑΚΑ ('+act.length+')');act.slice(0,12).forEach(m=>line('• '+m.name+(m.strength?' '+m.strength:'')+' — '+freqText(m),38));if(act.length>12)line('… και άλλα '+(act.length-12),36,'#9aa8a4');
  if(p.other){lbl('ΑΛΛΑ');line(p.other,38)}
  const cs=contactsOf();if(cs.length){lbl('ΕΠΑΦΕΣ');cs.slice(0,3).forEach(c=>line(c.name+(c.rel?' ('+c.rel+')':'')+(c.phone?'  '+c.phone:''),42,'#fff',true))}
- x.font=`28px ${F}`;x.fillStyle='#6b7a76';x.fillText('Ενημέρωση '+fmtS(new Date())+' · Φάκελος Υγείας',M,H-70);
+ x.font=`28px ${F}`;x.fillStyle='#6b7a76';x.fillText(tr('Ενημέρωση '+fmtS(new Date())+' · Φάκελος Υγείας'),M,H-70);
  const blob=await new Promise(r=>c.toBlob(r,'image/png')),url=URL.createObjectURL(blob);
  openDlg(`<h2>🖼 Εικόνα κλειδωμένης οθόνης ${hq('lockimg')}</h2><img src="${url}" style="width:55%;display:block;margin:0 auto 10px;border-radius:12px;border:1px solid var(--line)">
  <div class="mut">Αποθηκεύστε την και βάλτε την ως φόντο στην <b>κλειδωμένη οθόνη</b>: Ρυθμίσεις → Ταπετσαρία (ή Οθόνη κλειδώματος). Ξαναφτιάξτε την όταν αλλάζουν τα φάρμακα.</div>
@@ -1259,22 +1295,23 @@ async function lockImage(){
 }
 
 /* ---------- Πλήρης αναφορά για γιατρό ---------- */
-function fullReport(){
+function fullReport(){reportDlg()}
+function reportHTML(){
  const p=D.profile,act=D.meds.filter(m=>m.active),since=Date.now()-30*864e5,bpl=D.bp.filter(r=>+new Date(r.t)>=since),st=bpStats(bpl),rs=recentStopped();
  const T=(h,rows)=>`<table><tr>${h.map(x=>`<th>${x}</th>`).join('')}</tr>${rows.join('')}</table>`;
  let h=`<h2>Ιατρική αναφορά — ${esc(p.name||'')}</h2><div>${ageOf()!=null?ageOf()+' ετών · ':''}${p.sex==='m'?'Άνδρας · ':p.sex==='f'?'Γυναίκα · ':''}${p.height?p.height+' εκ. · ':''}${p.weight?p.weight+' κιλά · ':''}${p.blood?'Ομάδα αίματος '+esc(p.blood)+' · ':''}${p.amka?'ΑΜΚΑ '+esc(p.amka):''}</div><div>Εκτύπωση: ${fmtS(new Date())}</div>
  <h3>Αλλεργίες</h3><div><b>${esc(p.allergies||(p.noAllergy?'Καμία γνωστή':'Δεν έχει δηλωθεί'))}</b></div>
  ${contactsOf().length?`<div>Επαφές: ${esc(contactsText())}</div>`:''}${doctorsOf().length?`<div>Γιατροί: ${esc(doctorsText())}</div>`:''}
- ${p.conditions?`<h3>Παθήσεις / ιστορικό</h3><div>${esc(p.conditions)}</div>`:''}
- <h3>Ενεργά φάρμακα (${act.length})</h3>${act.length?T(['Φάρμακο','Δόση','Πότε','Για','Τήρηση 30 ημ.'],act.map(m=>{const ad=m.prn?null:adherence(m,30);return `<tr><td><b>${esc(m.name)}</b> ${esc(m.strength||'')}${m.substance?'<br><small>'+esc(m.substance)+'</small>':''}</td><td>${esc(m.dose||'')}</td><td>${esc(freqText(m))}</td><td>${esc(m.purpose||'')}</td><td>${ad!=null?ad+'%':'—'}</td></tr>`})):'—'}
- ${rs.length?`<h3>Διακοπή τελευταίων 3 μηνών</h3>${rs.map(m=>`<div>${esc(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+esc(m.endReason)+')':''}</div>`).join('')}`:''}
+ ${p.conditions?`<h3>Παθήσεις / ιστορικό</h3><div>${u(p.conditions)}</div>`:''}
+ <h3>Ενεργά φάρμακα (${act.length})</h3>${act.length?T(['Φάρμακο','Δόση','Πότε','Για','Τήρηση 30 ημ.'],act.map(m=>{const ad=m.prn?null:adherence(m,30);return `<tr><td><b>${u(m.name)}</b> ${esc(m.strength||'')}${m.substance?'<br><small>'+esc(m.substance)+'</small>':''}</td><td>${u(m.dose||'')}</td><td>${esc(freqText(m))}</td><td>${esc(m.purpose||'')}</td><td>${ad!=null?ad+'%':'—'}</td></tr>`})):'—'}
+ ${rs.length?`<h3>Διακοπή τελευταίων 3 μηνών</h3>${rs.map(m=>`<div>${u(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+'<span class="notr">'+esc(m.endReason)+'</span>'+')':''}</div>`).join('')}`:''}
  <h3>Πίεση (30 ημέρες)</h3>${st?`<div>Μέσος όρος <b>${st.sys}/${st.dia}</b>${st.pulse?', σφυγμοί '+st.pulse:''} · ${st.n} μετρήσεις · εύρος μεγάλης ${st.minS}–${st.maxS} · πάνω από 135/85: ${st.high}</div>${T(['Ζώνη','Μετρ.','Μ.Ο.'],ZONES.map(z=>{const zl=bpl.filter(r=>zoneOf(new Date(r.t))===z),s=bpStats(zl);return `<tr><td>${z.n}</td><td>${zl.length}</td><td>${s?s.sys+'/'+s.dia:'—'}</td></tr>`}))}`:'<div>Χωρίς μετρήσεις</div>'}`;
  const vt=Object.keys(VT).map(k=>{const l=D.vitals.filter(r=>r.type===k&&+new Date(r.t)>=since);if(!l.length)return '';const avg=l.reduce((a,r)=>a+r.v,0)/l.length,last=l.sort((a,b)=>a.t<b.t?1:-1)[0];return `<tr><td>${VT[k].n}</td><td>${fmtNum(last.v)} ${VT[k].u} (${fmtS(new Date(last.t))})</td><td>${fmtNum(avg)}</td><td>${l.length}</td></tr>`}).join('');
  if(vt)h+=`<h3>Άλλες μετρήσεις (30 ημέρες)</h3>${T(['Μέτρηση','Τελευταία','Μ.Ο.','Πλήθος'],[vt])}`;
  const lg=labGroups();if(lg.length)h+=`<h3>Εξετάσεις (τελευταία τιμή)</h3>${T(['Εξέταση','Τιμή','Όρια','Ημερομηνία','Προηγούμενη'],lg.map(([n,l])=>{const r=l[0],f=labFlag(r);return `<tr><td>${esc(n)}</td><td><b>${f.s} ${fmtNum(r.v)}</b> ${esc(r.u||'')}</td><td>${r.lo??''}–${r.hi??''}</td><td>${fmtS(fromKey(r.d))}</td><td>${l[1]?fmtNum(l[1].v)+' ('+fmtS(fromKey(l[1].d))+')':''}</td></tr>`}))}`;
- const sy=D.symptoms.filter(s=>+new Date(s.t)>=since).sort((a,b)=>a.t<b.t?1:-1);if(sy.length)h+=`<h3>Συμπτώματα (30 ημέρες)</h3>${T(['Ημερομηνία','Σύμπτωμα','Ένταση','Σχετικά'],sy.map(s=>{const c=symCtx(s);return `<tr><td>${fmtS(new Date(s.t))} ${hm(new Date(s.t))}</td><td>${esc(s.what)}${s.dur?' ('+esc(s.dur)+')':''}</td><td>${s.sev}/5</td><td>${esc([c.meds.join(', '),c.bp?'πίεση '+c.bp.sys+'/'+c.bp.dia:''].filter(Boolean).join(' · '))}</td></tr>`}))}`;
+ const sy=D.symptoms.filter(s=>+new Date(s.t)>=since).sort((a,b)=>a.t<b.t?1:-1);if(sy.length)h+=`<h3>Συμπτώματα (30 ημέρες)</h3>${T(['Ημερομηνία','Σύμπτωμα','Ένταση','Σχετικά'],sy.map(s=>{const c=symCtx(s);return `<tr><td>${fmtS(new Date(s.t))} ${hm(new Date(s.t))}</td><td>${u(s.what)}${s.dur?' ('+'<span class="notr">'+esc(s.dur)+'</span>'+')':''}</td><td>${s.sev}/5</td><td>${esc([c.meds.join(', '),c.bp?'πίεση '+c.bp.sys+'/'+c.bp.dia:''].filter(Boolean).join(' · '))}</td></tr>`}))}`;
  const q=D.questions.filter(x=>!x.done);if(q.length)h+=`<h3>Ερωτήσεις για τον γιατρό</h3><ol>${q.map(x=>`<li>${esc(x.text)}</li>`).join('')}</ol>`;
- doPrint(h);
+ return h;
 }
 
 /* ---------- Πιεσόμετρο με ασύρματη σύνδεση ---------- */
@@ -1299,7 +1336,7 @@ function quickCard_old(){return `<div class="card"><h2>Γρήγορη καταγ
  <button class="chip" data-act="addbp">❤️ Πίεση</button><button class="chip" data-act="addvital" data-t="glu">🩸 Σάκχαρο</button><button class="chip" data-act="addvital" data-t="wt">⚖️ Βάρος</button><button class="chip" data-act="addvital" data-t="temp">🌡️ Θερμοκρασία</button><button class="chip" data-act="addvital" data-t="spo2">🫁 Οξυγόνο</button><button class="chip" data-act="addsym">🤒 Σύμπτωμα</button><button class="chip" data-act="addq">❓ Ερώτηση για γιατρό</button></div></div>`}
 function simExtra(){let h=bkCard();const today=dkey(new Date()),lim=dkey(new Date(Date.now()+10*864e5));
  const rx=D.meds.filter(m=>m.active&&m.rxEnd&&m.rxEnd<=lim);
- if(rx.length)h+=`<div class="card warn"><h2>📄 Ανανέωση συνταγής ${hq('rxend')}</h2>${rx.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.rxEnd<today?'<b style="color:var(--red)">έληξε</b> '+fmtS(fromKey(m.rxEnd)):'λήγει '+fmtS(fromKey(m.rxEnd))}</div>`).join('')}</div>`;
+ if(rx.length)h+=`<div class="card warn"><h2>📄 Ανανέωση συνταγής ${hq('rxend')}</h2>${rx.map(m=>`<div>💊 <b>${u(m.name)}</b> — ${m.rxEnd<today?'<b style="color:var(--red)">έληξε</b> '+fmtS(fromKey(m.rxEnd)):'λήγει '+fmtS(fromKey(m.rxEnd))}</div>`).join('')}</div>`;
  const pv=prevList().filter(x=>x.st==='over');if(pv.length)h+=`<div class="card"><h2>🛡 Εκπρόθεσμοι έλεγχοι</h2>${pv.map(x=>`<div class="edf" data-act="prevedit" data-k="${x.k}">${x.n} <span class="mut">— έπρεπε ${fmtS(x.due)}</span></div>`).join('')}</div>`;
  const oq=D.questions.filter(q=>!q.done).length,na=D.appts.find(a=>!a.done&&a.d>=today&&a.d<=dkey(new Date(Date.now()+3*864e5)));
  if(oq&&na)h+=`<div class="card"><b>❓ Έχετε ${oq} ${oq===1?'ερώτηση':'ερωτήσεις'} για τον γιατρό</b> — ραντεβού ${fmtS(fromKey(na.d))}. <button class="small" data-act="goper">Προβολή</button></div>`;
@@ -1419,7 +1456,7 @@ function rPie(){
  else $('#t-pie').innerHTML=bar+(v==='labs'?rLabs():rVital(v));
  const nb=$('#mbar');if(nb){nb.scrollLeft=MBAR_SL;const on=nb.querySelector('.on');if(on){const l=on.offsetLeft-nb.offsetLeft;if(l<nb.scrollLeft)nb.scrollLeft=Math.max(0,l-10);else if(l+on.offsetWidth>nb.scrollLeft+nb.clientWidth)nb.scrollLeft=l+on.offsetWidth-nb.clientWidth+10}MBAR_SL=nb.scrollLeft;nb.addEventListener('scroll',()=>{MBAR_SL=nb.scrollLeft},{passive:true})}
 }
-function quickCard(){const sh=mShown().filter(k=>k!=='labs');return `<div class="card"><h2>Γρήγορη καταγραφή</h2><div class="chips">
+function quickCard_old(){const sh=mShown().filter(k=>k!=='labs');return `<div class="card"><h2>Γρήγορη καταγραφή</h2><div class="chips">
  ${sh.map(k=>k==='bp'?'<button class="chip" data-act="addbp">❤️ Πίεση</button>':`<button class="chip" data-act="addvital" data-t="${k}">${mLabel(k)}</button>`).join('')}<button class="chip" data-act="addsym">🤒 Σύμπτωμα</button><button class="chip" data-act="addq">❓ Ερώτηση για γιατρό</button></div></div>`}
 
 /* ---------- Επαφές έκτακτης ανάγκης & γιατροί ---------- */
@@ -1432,8 +1469,8 @@ const ROWCFG={
  contacts:{t:'Επαφές έκτακτης ανάγκης',h:'contacts',f:[['name','Όνομα'],['rel','Σχέση (π.χ. σύζυγος, γιος)'],['phone','Τηλέφωνο','tel']]},
  doctors:{t:'Οι γιατροί μου',h:'doctors',f:[['spec','Ειδικότητα','spec'],['name','Όνομα γιατρού'],['phone','Τηλέφωνο','tel'],['note','Διεύθυνση / σημείωση']]}
 };
-function rowHTML(kind,r){const c=ROWCFG[kind];r=r||{};return `<fieldset class="rowset"><div class="g2">${c.f.map(([k,l,t])=>`<label>${l}<input name="f_${k}" value="${esc(r[k]||'')}" ${t==='tel'?'type="tel" inputmode="tel" autocomplete="off"':''} ${t==='spec'?'list="speclist"':''}></label>`).join('')}</div><button type="button" class="small danger" data-act="rowdel">✕ Αφαίρεση</button></fieldset>`}
-function rowsForm(kind){
+function rowHTML_old(kind,r){const c=ROWCFG[kind];r=r||{};return `<fieldset class="rowset"><div class="g2">${c.f.map(([k,l,t])=>`<label>${l}<input name="f_${k}" value="${esc(r[k]||'')}" ${t==='tel'?'type="tel" inputmode="tel" autocomplete="off"':''} ${t==='spec'?'list="speclist"':''}></label>`).join('')}</div><button type="button" class="small danger" data-act="rowdel">✕ Αφαίρεση</button></fieldset>`}
+function rowsForm_old(kind){
  const c=ROWCFG[kind],list=kind==='contacts'?contactsOf():doctorsOf();
  openDlg(`<h2>${c.t} ${hq(c.h)}</h2><datalist id="speclist">${SPECS.map(s=>`<option value="${s}">`).join('')}</datalist>
  <div id="rows">${(list.length?list:[{}]).map(r=>rowHTML(kind,r)).join('')}</div>
@@ -1441,13 +1478,13 @@ function rowsForm(kind){
  fd=>{const cols=c.f.map(([k])=>fd.getAll('f_'+k)),out=[];cols[0].forEach((_,i)=>{const o={};c.f.forEach(([k],j)=>o[k]=String(cols[j][i]||'').trim());if(o.name||o.phone)out.push(o)});
   D.profile[kind]=out;if(kind==='contacts')D.profile.contact='';else D.profile.doctor='';save();render();toast('Αποθηκεύτηκε')});
 }
-function listSec(kind,label){const l=kind==='contacts'?contactsOf():doctorsOf();
- return `<div class="lbl">${label} ${hq(ROWCFG[kind].h)}</div><div class="edf ${l.length?'':'noprint'}" data-act="rowsedit" data-k="${kind}"><span class="pen">✎</span>${l.length?l.map(r=>kind==='contacts'?`<div style="margin:3px 0"><b>${esc(r.name)}</b>${r.rel?' <span class="mut">('+esc(r.rel)+')</span>':''} ${telLink(r.phone)}</div>`:`<div style="margin:3px 0">${r.spec?'<span class="mut">'+esc(r.spec)+':</span> ':''}<b>${esc(r.name)}</b> ${telLink(r.phone)}${r.note?'<div class="mut" style="font-size:.85em">'+esc(r.note)+'</div>':''}</div>`).join(''):'<span class="ph">πατήστε για προσθήκη</span>'}</div>`}
+function listSec_old(kind,label){const l=kind==='contacts'?contactsOf():doctorsOf();
+ return `<div class="lbl">${label} ${hq(ROWCFG[kind].h)}</div><div class="edf ${l.length?'':'noprint'}" data-act="rowsedit" data-k="${kind}"><span class="pen">✎</span>${l.length?l.map(r=>kind==='contacts'?`<div style="margin:3px 0"><b>${u(r.name)}</b>${r.rel?' <span class="mut">('+'<span class="notr">'+esc(r.rel)+'</span>'+')</span>':''} ${telLink(r.phone)}</div>`:`<div style="margin:3px 0">${r.spec?'<span class="mut">'+esc(r.spec)+':</span> ':''}<b>${u(r.name)}</b> ${telLink(r.phone)}${r.note?'<div class="mut" style="font-size:.85em">'+'<span class="notr">'+esc(r.note)+'</span>'+'</div>':''}</div>`).join(''):'<span class="ph">πατήστε για προσθήκη</span>'}</div>`}
 function emergCard(){const cs=contactsOf().filter(c=>c.phone).slice(0,4);return `<div class="card warn"><h2>🚨 Έκτακτη ανάγκη ${hq('emergency')}</h2><div class="row"><a class="btn" data-act="call" href="tel:166" style="text-decoration:none;background:var(--red);color:#fff;border-color:var(--red);font-weight:700">📞 166 ΕΚΑΒ</a><a class="btn" data-act="call" href="tel:112" style="text-decoration:none">📞 112</a>${cs.map(c=>`<a class="btn" data-act="call" href="${telHref(c.phone)}" style="text-decoration:none">📞 ${esc(c.name||c.phone)}</a>`).join('')}</div>
  ${cs.length?'':'<div class="mut" style="margin-top:6px">Προσθέστε επαφή με τηλέφωνο για κλήση με ένα πάτημα. <button class="small" data-act="rowsedit" data-k="contacts">+ Επαφή</button></div>'}
  <button class="wide" style="margin-top:8px" data-act="lockimg">🖼 Εικόνα για την κλειδωμένη οθόνη</button></div>`}
 function contactsText(){return contactsOf().map(c=>c.name+(c.rel?' ('+c.rel+')':'')+(c.phone?' '+c.phone:'')).join(', ')}
-function doctorsText(){return doctorsOf().map(d=>(d.spec?d.spec+': ':'')+d.name+(d.phone?' '+d.phone:'')).join(', ')}
+function doctorsText_old(){return doctorsOf().map(d=>(d.spec?d.spec+': ':'')+d.name+(d.phone?' '+d.phone:'')).join(', ')}
 
 /* ---------- Αντίγραφα: κοινός φάκελος με άδεια ---------- */
 let BKS=null;
@@ -1493,6 +1530,185 @@ Object.assign(HELP,{
  doctors:['Οι γιατροί μου','Όλοι οι γιατροί σας με ειδικότητα και τηλέφωνο — πατάτε το τηλέφωνο για κλήση. Τα ονόματα προτείνονται και στο πεδίο «Γιατρός που το έγραψε» των φαρμάκων.']
 });
 
+/* ================= ΕΚΔΟΣΗ 1.6 ================= */
+
+/* ---------- Διευθύνσεις & χάρτης ---------- */
+function mapUrl(o){if(!o)return '';const co=String(o.coords||'').trim();
+ if(/^https?:\/\//i.test(co))return co;
+ const m=co.match(/(-?\d{1,3}(?:\.\d+)?)\s*[,;\s]\s*(-?\d{1,3}(?:\.\d+)?)/)||co.replace(/(\d),(\d)/g,'$1.$2').match(/(-?\d{1,3}(?:\.\d+)?)\s+(-?\d{1,3}(?:\.\d+)?)/);
+ if(m)return 'https://www.google.com/maps/search/?api=1&query='+m[1]+','+m[2];
+ if(o.addr)return 'https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(o.addr);return ''}
+const pinLink=o=>{const u=mapUrl(o);return u?`<a class="tel" data-act="call" target="_blank" rel="noopener" href="${u}">📍 Χάρτης</a>`:''};
+const addrText=o=>[o.addr,o.floor?('όροφος '+o.floor):''].filter(Boolean).join(', ');
+function geoFill(btn){const inp=btn.parentElement.querySelector('input');if(!navigator.geolocation){alert('Η συσκευή δεν δίνει τοποθεσία.');return}btn.disabled=true;btn.textContent='⏳';
+ navigator.geolocation.getCurrentPosition(p=>{inp.value=p.coords.latitude.toFixed(6)+', '+p.coords.longitude.toFixed(6);btn.disabled=false;btn.textContent='📍';inp.dispatchEvent(new Event('input',{bubbles:true}))},e=>{btn.disabled=false;btn.textContent='📍';alert('Δεν βρέθηκε η τοποθεσία. Επιτρέψτε την πρόσβαση στην τοποθεσία ή γράψτε τις συντεταγμένες.')},{enableHighAccuracy:true,timeout:15000})}
+const coordsField=(name,val)=>`<label>Συντεταγμένες ή σύνδεσμος χάρτη ${hq('coords')}<div class="row" style="flex-wrap:nowrap"><input name="${name}" value="${esc(val||'')}" placeholder="π.χ. 37.9838, 23.7275" style="margin:0"><button type="button" class="small" data-act="geo" title="Τρέχουσα θέση">📍</button></div></label>`;
+
+/* ---------- Γιατροί & επαφές: εύκολη προσθήκη πολλών ---------- */
+ROWCFG.contacts.f=[['name','Όνομα'],['rel','Σχέση (π.χ. σύζυγος, γιος)'],['phone','Τηλέφωνο','tel']];
+ROWCFG.doctors.f=[['spec','Ειδικότητα','spec'],['name','Όνομα γιατρού'],['phone','Τηλέφωνο','tel'],['addr','Διεύθυνση (οδός, αριθμός, περιοχή)'],['floor','Όροφος'],['coords','','coords'],['note','Σημείωση (π.χ. ώρες ιατρείου)']];
+function rowHTML(kind,r,i){const c=ROWCFG[kind];r=r||{};const empty=!c.f.some(([k])=>r[k]);
+ return `<fieldset class="rowset"><legend>${kind==='contacts'?'👤 Επαφή':'🩺 Γιατρός'} <span class="rn">${i||''}</span>${empty?' <span class="mut">(νέος)</span>':''}</legend><div class="g2">${c.f.map(([k,l,t])=>t==='coords'?`<div style="grid-column:1/-1">${coordsField('f_'+k,r[k])}</div>`:`<label ${k==='addr'||k==='note'?'style="grid-column:1/-1"':''}>${l}<input name="f_${k}" value="${esc(r[k]||'')}" ${t==='tel'?'type="tel" inputmode="tel" autocomplete="off"':''} ${t==='spec'?'list="speclist"':''}></label>`).join('')}</div>
+ <div class="row sp">${kind==='doctors'&&(r.addr||r.coords)?pinLink(r):'<span></span>'}<button type="button" class="small danger" data-act="rowdel">✕ Αφαίρεση</button></div></fieldset>`}
+function renumRows(){document.querySelectorAll('#rows fieldset .rn').forEach((e,i)=>e.textContent=i+1)}
+function ensureEmptyRow(kind){const fs=document.querySelectorAll('#rows fieldset'),last=fs[fs.length-1];if(!last||[...last.querySelectorAll('input')].some(i=>i.value.trim())){$('#rows').insertAdjacentHTML('beforeend',rowHTML(kind,{},fs.length+1));renumRows()}}
+function rowsForm(kind){
+ const c=ROWCFG[kind],list=kind==='contacts'?contactsOf():doctorsOf();
+ openDlg(`<h2>${c.t} ${hq(c.h)}</h2><div class="mut" style="margin-bottom:8px">Μόλις αρχίσετε να γράφετε, ανοίγει από κάτω κενή θέση για ${kind==='contacts'?'την επόμενη επαφή':'τον επόμενο γιατρό'}.</div><datalist id="speclist">${SPECS.map(s=>`<option value="${s}">`).join('')}</datalist>
+ <div id="rows" data-k="${kind}">${list.map((r,i)=>rowHTML(kind,r,i+1)).join('')}</div>${btns()}`,
+ fd=>{const cols=c.f.map(([k])=>fd.getAll('f_'+k)),out=[];cols[0].forEach((_,i)=>{const o={};c.f.forEach(([k],j)=>o[k]=String(cols[j][i]||'').trim());if(o.name||o.phone||o.addr)out.push(o)});
+  D.profile[kind]=out;if(kind==='contacts')D.profile.contact='';else D.profile.doctor='';save();render();toast('Αποθηκεύτηκε')});
+ ensureEmptyRow(kind);
+}
+document.addEventListener('input',e=>{const rows=e.target.closest&&e.target.closest('#rows');if(rows)ensureEmptyRow(rows.dataset.k)});
+function listSec(kind,label){const l=kind==='contacts'?contactsOf():doctorsOf();
+ return `<div class="lbl">${label} ${hq(ROWCFG[kind].h)}</div><div class="edf ${l.length?'':'noprint'}" data-act="rowsedit" data-k="${kind}"><span class="pen">✎</span>${l.length?l.map(r=>kind==='contacts'?`<div style="margin:3px 0"><b>${u(r.name)}</b>${r.rel?' <span class="mut">('+'<span class="notr">'+esc(r.rel)+'</span>'+')</span>':''} ${telLink(r.phone)}</div>`:`<div style="margin:5px 0">${r.spec?'<span class="mut">'+esc(r.spec)+':</span> ':''}<b>${u(r.name)}</b> ${telLink(r.phone)}${addrText(r)?`<div class="mut" style="font-size:.85em">${esc(addrText(r))} ${pinLink(r)}</div>`:(r.coords?`<div>${pinLink(r)}</div>`:'')}${r.note?'<div class="mut" style="font-size:.85em">'+'<span class="notr">'+esc(r.note)+'</span>'+'</div>':''}</div>`).join('')+`<div class="noprint" style="margin-top:4px"><span class="ph">+ πατήστε για ${kind==='contacts'?'νέα επαφή':'νέο γιατρό'}</span></div>`:'<span class="ph">πατήστε για προσθήκη</span>'}</div>`}
+function doctorsText(){return doctorsOf().map(d=>(d.spec?d.spec+': ':'')+d.name+(d.phone?' '+d.phone:'')+(addrText(d)?', '+addrText(d):'')).join(' | ')}
+
+/* ---------- Ραντεβού με διεύθυνση & χάρτη ---------- */
+function apptForm(a){
+ const n=!a;a=a||{};const docs=doctorsOf();
+ openDlg(`<h2>${n?'Νέο ραντεβού / εξέταση':'Επεξεργασία'} ${hq('appts')}</h2>
+ ${docs.length?`<label>Γιατρός (συμπληρώνει τα υπόλοιπα)<select name="doc" data-act="apptdoc"><option value="">—</option>${docs.map((d,i)=>`<option value="${i}">${esc((d.spec?d.spec+' — ':'')+d.name)}</option>`).join('')}</select></label>`:''}
+ <label>Τι<input name="title" required value="${esc(a.title||'')}" placeholder="π.χ. Καρδιολόγος, αιματολογικές"></label>
+ <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${a.d||dkey(new Date())}"></label><label>Ώρα<input type="time" name="h" value="${a.h||''}"></label></div>
+ <label>Πού (ιατρείο, νοσοκομείο, εργαστήριο)<input name="place" value="${esc(a.place||'')}"></label>
+ <div class="g2"><label style="grid-column:1/-1">Διεύθυνση<input name="addr" value="${esc(a.addr||'')}" placeholder="οδός, αριθμός, περιοχή"></label><label>Όροφος<input name="floor" value="${esc(a.floor||'')}"></label><label>Τηλέφωνο<input type="tel" name="phone" value="${esc(a.phone||'')}"></label></div>
+ ${coordsField('coords',a.coords)}
+ <label>Σημειώσεις / αποτελέσματα<textarea name="note" placeholder="π.χ. νηστεία 12 ωρών, να πάρω τις εξετάσεις">${esc(a.note||'')}</textarea></label>
+ ${!n?`<label class="ck"><input type="checkbox" name="done" ${a.done?'checked':''}> Ολοκληρώθηκε</label>`:''}
+ ${btns(!n?`<button type="button" class="danger" data-act="delappt" data-id="${a.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const g=k=>String(fd.get(k)||'').trim();const o={id:a.id||uid(),title:g('title'),d:fd.get('d'),h:fd.get('h'),place:g('place'),addr:g('addr'),floor:g('floor'),phone:g('phone'),coords:g('coords'),note:g('note'),done:!!fd.get('done')};
+  const i=D.appts.findIndex(x=>x.id===o.id);if(i>=0)D.appts[i]=o;else D.appts.push(o);save();render();toast('Αποθηκεύτηκε')});
+}
+function apptExtra(a){const at=addrText(a);return (at||a.coords||a.phone)?`<div class="mut">${esc(at)} ${pinLink(a)} ${telLink(a.phone)}</div>`:''}
+
+/* ---------- Γρήγορη καταγραφή με επιλογή ---------- */
+const QALL=()=>ALLM.filter(k=>k!=='labs').concat(['sym','q']);
+const qLabel=k=>k==='sym'?'🤒 Σύμπτωμα':k==='q'?'❓ Ερώτηση για γιατρό':mLabel(k);
+function qShown(){const s=D.settings.qshow;return Array.isArray(s)&&s.length?QALL().filter(k=>s.includes(k)):mShown().filter(k=>k!=='labs').concat(['sym','q'])}
+function quickCard(){const sh=qShown();return `<div class="card"><div class="row sp"><h2 style="margin:0">Γρήγορη καταγραφή ${hq('quick')}</h2><button class="small" data-act="qcfg" aria-label="Ρύθμιση">⚙</button></div><div class="chips" style="margin-top:10px">
+ ${sh.map(k=>k==='bp'?'<button class="chip" data-act="addbp">❤️ Πίεση</button>':k==='sym'?'<button class="chip" data-act="addsym">🤒 Σύμπτωμα</button>':k==='q'?'<button class="chip" data-act="addq">❓ Ερώτηση για γιατρό</button>':`<button class="chip" data-act="addvital" data-t="${k}">${mLabel(k)}</button>`).join('')}</div></div>`}
+function qcfgDlg(){const sh=qShown();
+ openDlg(`<h2>⚙ Γρήγορη καταγραφή ${hq('quick')}</h2><div class="mut" style="margin-bottom:8px">Διαλέξτε ποια κουμπιά θέλετε στην αρχική οθόνη.</div>
+ ${QALL().map(k=>`<label class="ck" style="display:flex;margin:8px 0"><input type="checkbox" name="q" value="${k}" ${sh.includes(k)?'checked':''}> ${qLabel(k)}</label>`).join('')}${btns()}`,
+ fd=>{const l=fd.getAll('q');if(!l.length){alert('Διαλέξτε τουλάχιστον ένα.');return false}D.settings.qshow=l;persist();render();toast('Αποθηκεύτηκε')})}
+
+/* ---------- Χρωματική μπάρα πίεσης ---------- */
+const BPZ=[{t:'Χαμηλή',c:'var(--blue)',s:[70,90],d:[40,60],r:'κάτω από 90/60'},{t:'Φυσιολογική',c:'var(--green)',s:[90,135],d:[60,85],r:'90–134 / 60–84'},{t:'Οριακά υψηλή',c:'var(--yellow)',s:[135,140],d:[85,90],r:'135–139 / 85–89'},{t:'Υψηλή 1ου βαθμού',c:'var(--orange)',s:[140,160],d:[90,100],r:'140–159 / 90–99'},{t:'Υψηλή 2ου βαθμού',c:'var(--red)',s:[160,180],d:[100,110],r:'160–179 / 100–109'},{t:'Πολύ υψηλή',c:'#8e0000',s:[180,220],d:[110,130],r:'180 / 110 και πάνω'}];
+function zpos(v,key){for(let i=0;i<BPZ.length;i++){const [a,b]=BPZ[i][key];if(v<b||i===BPZ.length-1){const f=Math.max(0,Math.min(1,(v-a)/(b-a)));return (i+f)/BPZ.length*100}}return 50}
+function bpPos(s,d){const ps=zpos(s,'s'),pd=zpos(d,'d');return (s<90||d<60)&&!(s>=135||d>=85)?Math.min(ps,pd):Math.max(ps,pd)}
+function bpMeter(s,d,label){if(!s||!d)return '';const p=Math.max(1.5,Math.min(98.5,bpPos(s,d)));
+ return `<div class="bpm" role="button" tabindex="0" data-act="help" data-k="bpmeter" data-s="${s}" data-d="${d}" data-l="${esc(label||'')}"><div class="bpbar">${BPZ.map(z=>`<span style="background:${z.c}"></span>`).join('')}</div><i style="left:${p}%"></i><div class="bplbl"><span>χαμηλή</span><span>φυσιολογική</span><span>υψηλή</span></div></div>`}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('.bpm');if(b)window._bpm={s:+b.dataset.s,d:+b.dataset.d,l:b.dataset.l}},true);
+HELP.bpmeter=()=>{const m=window._bpm||{},zi=Math.min(BPZ.length-1,Math.floor(bpPos(m.s,m.d)/100*BPZ.length)),t=target(ageOf());
+ return['Πού βρίσκεται η πίεσή σας',`${m.s?`${m.l?esc(m.l)+': ':''}<b style="font-size:1.2em">${m.s}/${m.d}</b> → ζώνη <b style="color:${BPZ[zi].c}">${BPZ[zi].t}</b><br><br>`:''}
+ ${BPZ.map((z,i)=>`<div style="display:flex;gap:8px;align-items:center;padding:4px 6px;border-radius:8px;${i===zi?'background:var(--pri2);font-weight:700':''}"><span style="width:18px;height:12px;border-radius:3px;background:${z.c};flex:none"></span><span class="grow">${z.t}</span><span class="mut" style="font-size:13px">${z.r}</span>${i===zi?' ◀':''}</div>`).join('')}
+ <br>Όρια για μετρήσεις <b>στο σπίτι</b>. Η θέση στη μπάρα βγαίνει από τη χειρότερη από τις δύο τιμές (μεγάλη ή μικρή). Ο δικός σας στόχος: <b>${t.txt}</b>.<br><br>Μία μέτρηση δεν αρκεί — σημασία έχει ο μέσος όρος πολλών ημερών. ${m.s>=180||m.d>=110?'<br><br><b style="color:var(--red)">Ξαναμετρήστε σε 5 λεπτά. Αν μείνει τόσο ψηλά ή έχετε πόνο στο στήθος, δύσπνοια, αδυναμία ή θολή όραση, καλέστε το 166.</b>':''}`]};
+
+/* ---------- Πλήρης αναφορά: εκτύπωση / PDF / κείμενο ---------- */
+function loadJS(u){return new Promise((res,rej)=>{if(document.querySelector(`script[src="${u}"]`))return res();const s=document.createElement('script');s.src=u;s.onload=res;s.onerror=()=>rej(new Error('Χρειάζεται σύνδεση στο διαδίκτυο για τη δημιουργία του αρχείου.'));document.head.appendChild(s)})}
+const REPCSS='<style>.rep{font:14px/1.45 system-ui,-apple-system,Roboto,sans-serif;color:#000}.rep h2{margin:0 0 6px;font-size:22px}.rep h3{margin:16px 0 6px;font-size:16px;border-bottom:2px solid #0f766e;padding-bottom:2px;color:#0f766e}.rep table{width:100%;border-collapse:collapse;font-size:13px}.rep th,.rep td{border-bottom:1px solid #bbb;padding:4px;text-align:left;vertical-align:top}.rep th{color:#444}</style>';
+function reportDlg(){
+ openDlg(`<h2>📑 Πλήρης αναφορά για γιατρό ${hq('report')}</h2><div class="mut" style="margin-bottom:10px">Στοιχεία, αλλεργίες, φάρμακα, πίεση και μετρήσεις του μήνα, εξετάσεις, συμπτώματα και οι ερωτήσεις σας.</div>
+ <button type="button" class="pri wide" data-act="reppdf" style="margin-bottom:8px">📄 Αποστολή ως PDF (Viber, email, μηνύματα…)</button>
+ <button type="button" class="wide" data-act="reptext" style="margin-bottom:8px">💬 Αποστολή ως κείμενο (Viber, μηνύματα…)</button>
+ <button type="button" class="wide" data-act="repprint" style="margin-bottom:8px">🖨 Εκτύπωση</button>
+ <div class="mut" id="repst"></div><div class="acts"><button type="button" data-act="close">Κλείσιμο</button></div>`,()=>{});
+}
+function offscreen(html){const box=document.createElement('div');box.className='rep';box.style.cssText='position:fixed;left:-10000px;top:0;width:794px;background:#fff;color:#000;padding:40px 44px;box-sizing:border-box';box.innerHTML=REPCSS+html;document.body.appendChild(box);return box}
+function repName(ext){return 'anafora-ygeias-'+dkey(new Date())+'.'+ext}
+function saveBlob(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},2000)}
+async function reportPDF_old(){const st=$('#repst');const say=t=>{if(st)st.textContent=t};
+ try{say('⏳ Δημιουργία PDF…');
+  await loadJS('https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js');await loadJS('https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js');
+  const box=offscreen(reportHTML());await new Promise(r=>setTimeout(r,120));
+  const canvas=await html2canvas(box,{scale:2,backgroundColor:'#ffffff',logging:false});box.remove();
+  const {jsPDF}=window.jspdf,pdf=new jsPDF('p','mm','a4'),pw=210,ph=297,mt=8,pxmm=canvas.width/pw,pagePx=Math.floor((ph-2*mt)*pxmm);
+  for(let y=0,i=0;y<canvas.height;y+=pagePx,i++){const c=document.createElement('canvas');c.width=canvas.width;c.height=Math.min(pagePx,canvas.height-y);c.getContext('2d').drawImage(canvas,0,y,canvas.width,c.height,0,0,canvas.width,c.height);if(i)pdf.addPage();pdf.addImage(c.toDataURL('image/jpeg',0.9),'JPEG',0,i?mt:0,pw,c.height/pxmm)}
+  const blob=pdf.output('blob'),file=new File([blob],repName('pdf'),{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Ιατρική αναφορά'});say('✓ Στάλθηκε')}catch(e){say('')}}
+  else{saveBlob(blob,file.name);say('✓ Το PDF αποθηκεύτηκε στις Λήψεις')}
+ }catch(e){say('✕ '+e.message)}}
+function reportText(){const box=offscreen(reportHTML());const t=box.innerText.replace(/\n{3,}/g,'\n\n').trim();box.remove();return t}
+async function reportShareText(){const t=reportText();if(navigator.share){try{await navigator.share({title:'Ιατρική αναφορά',text:t})}catch(e){}}else await copy(t)}
+
+/* ---------- PDF χωρίς εξωτερικές βιβλιοθήκες ---------- */
+function b64bytes(d){const s=atob(d.split(',')[1]),u=new Uint8Array(s.length);for(let i=0;i<s.length;i++)u[i]=s.charCodeAt(i);return u}
+function makePDF(pages){ // pages: [{jpg:Uint8Array,w,h}]
+ const enc=new TextEncoder(),parts=[],offs=[];let len=0;const push=x=>{const b=typeof x==='string'?enc.encode(x):x;parts.push(b);len+=b.length};
+ const n=pages.length,W=595.28,H=841.89;push('%PDF-1.4\n');
+ const obj=(id,body,bin)=>{offs[id]=len;push(id+' 0 obj\n'+body);if(bin){push(bin);push('\nendstream')}push('\nendobj\n')};
+ obj(1,'<< /Type /Catalog /Pages 2 0 R >>');
+ obj(2,`<< /Type /Pages /Kids [${pages.map((_,i)=>(3+3*i)+' 0 R').join(' ')}] /Count ${n} >>`);
+ pages.forEach((pg,i)=>{const pid=3+3*i,cid=pid+1,iid=pid+2,cs=`q ${W} 0 0 ${H} 0 0 cm /Im0 Do Q`;
+  obj(pid,`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 ${W} ${H}] /Resources << /XObject << /Im0 ${iid} 0 R >> >> /Contents ${cid} 0 R >>`);
+  obj(cid,`<< /Length ${cs.length} >>\nstream\n${cs}\nendstream`);
+  obj(iid,`<< /Type /XObject /Subtype /Image /Width ${pg.w} /Height ${pg.h} /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length ${pg.jpg.length} >>\nstream\n`,pg.jpg)});
+ const total=3+3*n,xref=len;let x=`xref\n0 ${total}\n0000000000 65535 f \n`;for(let i=1;i<total;i++)x+=String(offs[i]).padStart(10,'0')+' 00000 n \n';
+ push(x+`trailer\n<< /Size ${total} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`);
+ return new Blob(parts,{type:'application/pdf'});
+}
+function htmlToPages(box){ // σχεδιάζει το περιεχόμενο της αναφοράς σε σελίδες Α4
+ const PW=1240,PH=1754,M=80,F='system-ui,-apple-system,Roboto,"Segoe UI",sans-serif',pages=[];let c,x,y;
+ const newPage=()=>{c=document.createElement('canvas');c.width=PW;c.height=PH;x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,PW,PH);x.textBaseline='top';y=M;pages.push(c);
+  x.font=`20px ${F}`;x.fillStyle='#888';x.fillText((D.profile.name||'')+' · '+fmtS(new Date())+' · '+pages.length,M,PH-50)};
+ const ensure=h=>{if(y+h>PH-M)newPage()};
+ const wrap=(t,w)=>{const out=[];String(t).split('\n').forEach(par=>{const ws=par.split(/\s+/);let cur='';ws.forEach(wd=>{const tt=cur?cur+' '+wd:wd;if(x.measureText(tt).width>w&&cur){out.push(cur);cur=wd}else cur=tt});out.push(cur)});return out};
+ const text=(t,size,opt)=>{opt=opt||{};x.font=`${opt.b?'bold ':''}${size}px ${F}`;const lines=wrap(t,PW-2*M-(opt.ind||0));lines.forEach(l=>{ensure(size*1.35);x.fillStyle=opt.col||'#111';x.fillText(l,M+(opt.ind||0),y);y+=size*1.35})};
+ newPage();
+ [...box.children].forEach(el=>{const tag=el.tagName;if(tag==='STYLE')return;const t=el.innerText.trim();if(!t&&tag!=='TABLE')return;
+  if(tag==='H2'){text(t,44,{b:1});y+=6}
+  else if(tag==='H3'){y+=18;ensure(80);text(t,32,{b:1,col:'#0f766e'});x.fillStyle='#0f766e';x.fillRect(M,y,PW-2*M,3);y+=12}
+  else if(tag==='OL'||tag==='UL'){[...el.children].forEach((li,i)=>text((tag==='OL'?(i+1)+'. ':'• ')+li.innerText.trim(),25,{ind:10}))}
+  else if(tag==='TABLE'){const rows=[...el.rows].map(r=>[...r.cells].map(cl=>cl.innerText.trim()));if(!rows.length)return;const nc=Math.max(...rows.map(r=>r.length));
+   x.font=`22px ${F}`;const lens=Array.from({length:nc},(_,j)=>Math.min(38,Math.max(8,2+(rows[0][j]||'').length,...rows.map(r=>(r[j]||'').length))));const sum=lens.reduce((a,b)=>a+b,0),TW=PW-2*M,ws=lens.map(l=>l/sum*TW);
+   rows.forEach((r,ri)=>{x.font=`${ri===0?'bold ':''}22px ${F}`;const cells=r.map((v,j)=>wrap(v,ws[j]-12));const h=Math.max(1,...cells.map(l=>l.length))*28+12;ensure(h);
+    if(ri===0){x.fillStyle='#eef6f5';x.fillRect(M,y,TW,h)}let cx=M;cells.forEach((ls,j)=>{x.fillStyle=ri===0?'#333':'#111';ls.forEach((l,k)=>x.fillText(l,cx+6,y+6+k*28));cx+=ws[j]});
+    y+=h;x.fillStyle='#ccc';x.fillRect(M,y-1,TW,1)});y+=8}
+  else text(t,25)});
+ return pages;
+}
+async function reportPDF(){const st=$('#repst');const say=t=>{if(st)st.textContent=t};
+ try{say('⏳ Δημιουργία PDF…');const box=offscreen(reportHTML());await new Promise(r=>setTimeout(r,80));
+  const pages=htmlToPages(box);box.remove();
+  const blob=makePDF(pages.map(c=>({jpg:b64bytes(c.toDataURL('image/jpeg',0.8)),w:c.width,h:c.height}))),file=new File([blob],repName('pdf'),{type:'application/pdf'});
+  if(navigator.canShare&&navigator.canShare({files:[file]})){try{await navigator.share({files:[file],title:'Ιατρική αναφορά'});say('✓ Στάλθηκε')}catch(e){say('')}}
+  else{saveBlob(blob,file.name);say('✓ Το PDF αποθηκεύτηκε στις Λήψεις')}
+ }catch(e){say('✕ '+e.message)}}
+
+/* ---------- Αντίγραφα: επιλογή φακέλου ---------- */
+async function pickFolder(){
+ if(!window.showDirectoryPicker){
+  if(window.showSaveFilePicker){try{const h=await showSaveFilePicker({suggestedName:bkName(),types:[{description:'Αντίγραφο',accept:{'application/json':['.json']}}]});const w=await h.createWritable();await w.write(JSON.stringify(allData()));await w.close();D.settings.lastBackup=new Date().toISOString();persist();toast('Το αντίγραφο αποθηκεύτηκε');render()}catch(e){}return}
+  alert('Αυτό το κινητό δεν επιτρέπει στις εφαρμογές ιστοσελίδας να διαλέξουν φάκελο. Το αντίγραφο κατεβαίνει στις Λήψεις — από εκεί μπορείτε να το μετακινήσετε όπου θέλετε με τη Διαχείριση αρχείων.');return}
+ try{const h=await pickRoot();if(await perm(h,true)){const r=await backupNow(false);toast(r==='folder'?'Ο φάκελος ορίστηκε και έγινε αντίγραφο':'Ο φάκελος ορίστηκε')}render();refreshBk()}catch(e){}
+}
+
+/* ---------- Κλικ ---------- */
+document.addEventListener('click',e=>{
+ if(e.target.closest('nav button'))return;const b=e.target.closest('[data-act]');if(!b)return;
+ switch(b.dataset.act){
+  case 'geo':geoFill(b);break;
+  case 'qcfg':qcfgDlg();break;
+  case 'reppdf':reportPDF();break;
+  case 'reptext':reportShareText();break;
+  case 'repprint':$('#dlg').close();doPrint(reportHTML());break;
+  case 'pickfolder':pickFolder();break;
+  case 'rowadd':renumRows();break;
+  case 'rowdel':setTimeout(()=>{renumRows();const k=$('#rows')&&$('#rows').dataset.k;if(k)ensureEmptyRow(k)},0);break;
+ }
+});
+document.addEventListener('change',e=>{if(e.target.name==='doc'&&e.target.dataset.act==='apptdoc'){const d=doctorsOf()[+e.target.value];if(!d)return;const f=$('#dform');const set=(n,v)=>{if(v&&f.elements[n])f.elements[n].value=v};set('title',d.spec||d.name);set('place',d.name);set('addr',d.addr);set('floor',d.floor);set('phone',d.phone);set('coords',d.coords)}});
+
+Object.assign(HELP,{
+ quick:['Γρήγορη καταγραφή','Κουμπιά για να περάσετε γρήγορα μια μέτρηση από την αρχική οθόνη. Με το ⚙ διαλέγετε ποια θέλετε να φαίνονται.'],
+ coords:['Συντεταγμένες / χάρτης','Για να σας πάει ο χάρτης ακριβώς στην πόρτα:<ul><li>πατήστε 📍 όταν βρίσκεστε στο σημείο (π.χ. στο ιατρείο) για να μπει η τρέχουσα θέση, ή</li><li>γράψτε συντεταγμένες, π.χ. <b>37.9838, 23.7275</b>, ή</li><li>επικολλήστε σύνδεσμο από τους Χάρτες (Κοινοποίηση → Αντιγραφή συνδέσμου).</li></ul>Αν δεν βάλετε συντεταγμένες, ο χάρτης ψάχνει τη διεύθυνση. Το «📍 Χάρτης» ανοίγει την πλοήγηση.'],
+ bpmeterinfo:['Χρωματική μπάρα','Πατήστε πάνω στη μπάρα για να δείτε σε ποια ζώνη είναι η πίεση και τι σημαίνει.']
+});
+HELP.report=['Πλήρης αναφορά','Ένα έγγραφο για το ραντεβού με όλα: στοιχεία, αλλεργίες, γιατρούς, φάρμακα με τήρηση, πίεση και άλλες μετρήσεις του μήνα, εξετάσεις με την προηγούμενη τιμή, συμπτώματα και οι ερωτήσεις σας.<ul><li><b>PDF</b>: αρχείο που στέλνετε με Viber, email, μηνύματα κ.λπ. (ανοίγει η λίστα κοινοποίησης του κινητού)</li><li><b>Κείμενο</b>: στέλνεται ως απλό μήνυμα</li><li><b>Εκτύπωση</b>: σε εκτυπωτή ή «Αποθήκευση ως PDF»</li></ul>'];
+
+{const _ct=cardText;cardText=function(){return tr(_ct())}}
 /* ---------- Χειρισμός κλικ ---------- */
 let installEvt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(TAB==='per')render()});
@@ -1566,6 +1782,7 @@ if('serviceWorker' in navigator){
 const qp=new URLSearchParams(location.search);
 if(qp.get('take'))handleTake(qp.get('take'));
 if(qp.get('take')||qp.get('v'))history.replaceState(null,'',location.pathname);
+startTr();
 showLock();
 render();
 setTimeout(refreshBk,1200);
