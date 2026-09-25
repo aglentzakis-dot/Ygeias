@@ -120,6 +120,7 @@ details summary{cursor:pointer}
 <script>
 "use strict";
 /* ---------- Βασικά ---------- */
+const APP_VERSION='1.2.0';
 const KEY='fakelosYgeias', SUB='Fakelos-Ygeias';
 const $=s=>document.querySelector(s);
 const pad=n=>String(n).padStart(2,'0');
@@ -200,7 +201,7 @@ function addHist(m,text){m.history=m.history||[];m.history.push({t:new Date().to
 let TAB='sim';
 function showTab(t){TAB=t;document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();scrollTo(0,0)}
 function render(){
- const n=new Date();$('#hdate').textContent=MERES[n.getDay()]+', '+fmtD(n);
+ const n=new Date();$('#hdate').textContent=MERES[n.getDay()]+', '+fmtD(n)+' · έκδ. '+APP_VERSION;
  ({sim:rSim,pie:rPie,far:rFar,kar:rKar,per:rPer})[TAB]();
  checkBanner();
 }
@@ -381,6 +382,11 @@ function rPer(){
  <div class="card"><div class="row sp"><h2 style="margin:0">Ραντεβού & εξετάσεις</h2><button class="pri small" data-act="addappt">+ Νέο</button></div>
  ${fut.length?fut.map(apRow).join(''):'<p class="mut">Κανένα ερχόμενο ραντεβού.</p>'}
  ${past.length?`<h3>Προηγούμενα</h3>${past.slice(0,20).map(apRow).join('')}`:''}</div>
+ <div class="card"><h2>Έκδοση εφαρμογής</h2>
+ <div>Έχετε την έκδοση <b>${APP_VERSION}</b></div>
+ <div class="mut" id="updstat">${D.settings.lastCheck?'Τελευταίος έλεγχος: '+fmtS(new Date(D.settings.lastCheck))+' '+hm(new Date(D.settings.lastCheck)):''}</div>
+ <div class="row" style="margin-top:8px"><button class="pri" data-act="checkupd">Έλεγχος για αναβάθμιση</button><button data-act="whatsnew">Τι νέο</button></div>
+ <div class="mut" style="margin-top:6px">Η αναβάθμιση γίνεται αυτόματα όταν ανοίγετε την εφαρμογή. Τα δεδομένα σας δεν επηρεάζονται.</div></div>
  <div class="card"><h2>Τεχνητή νοημοσύνη (δωρεάν)</h2>
  <div class="mut">Για την αναγνώριση φαρμάκων από φωτογραφία. Χρειάζεται δωρεάν κλειδί από το OpenRouter, χωρίς κάρτα. Αν έχετε ήδη κλειδί από το Identify-AI, βάλτε το ίδιο.</div>
  <label style="margin-top:8px">Κλειδί<input type="password" id="orkey" value="${esc(getKey())}" placeholder="sk-or-..." autocomplete="off"></label>
@@ -695,6 +701,44 @@ async function aiRun(file,name){
 }
 $('#camIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)aiRun(f,($('#dform [name=name]')||{}).value||'')});
 
+/* ---------- Εκδόσεις & αυτόματη αναβάθμιση ---------- */
+const vcmp=(a,b)=>{const x=String(a).split('.').map(Number),y=String(b).split('.').map(Number);for(let i=0;i<3;i++){const d=(x[i]||0)-(y[i]||0);if(d)return d}return 0};
+let REMOTE=null;
+async function fetchRemote(){const r=await fetch('version.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw new Error('σφάλμα '+r.status);return r.json()}
+async function applyUpdate(v){
+ try{sessionStorage.setItem('updTried',v)}catch(e){}
+ try{D.settings.pendingNews=v;persist()}catch(e){}
+ try{const ks=await caches.keys();await Promise.all(ks.map(k=>caches.delete(k)))}catch(e){}
+ try{if(swReg)await swReg.update()}catch(e){}
+ location.replace(location.pathname+'?v='+encodeURIComponent(v));
+}
+async function checkUpdate(manual){
+ const st=$('#updstat'),say=t=>{if(st)st.innerHTML=t};
+ if(manual)say('⏳ Έλεγχος…');
+ try{
+  REMOTE=await fetchRemote();D.settings.lastCheck=new Date().toISOString();persist();
+  if(vcmp(REMOTE.version,APP_VERSION)>0){
+   let tried='';try{tried=sessionStorage.getItem('updTried')}catch(e){}
+   const busy=$('#dlg').open;
+   if(manual||(!busy&&tried!==REMOTE.version)){say('⬇ Βρέθηκε η έκδοση '+esc(REMOTE.version)+' — αναβάθμιση…');toast('Αναβάθμιση στην έκδοση '+REMOTE.version+'…');setTimeout(()=>applyUpdate(REMOTE.version),800)}
+   else say('Υπάρχει νέα έκδοση '+esc(REMOTE.version)+' — πατήστε «Έλεγχος για αναβάθμιση».');
+  }else say('✓ Έχετε την τελευταία έκδοση ('+APP_VERSION+') · έλεγχος '+hm(new Date()));
+ }catch(e){if(manual)say('✕ Δεν έγινε έλεγχος (χωρίς σύνδεση;)')}
+}
+async function showNews(v){
+ let r=REMOTE;if(!r){try{r=await fetchRemote()}catch(e){}}
+ const list=(r&&r.changes)||[];
+ const items=list.filter(c=>!v||vcmp(c.version,APP_VERSION)<=0).slice(0,v?1:8);
+ openDlg(`<h2>${v?'Αναβαθμίστηκε στην έκδοση '+esc(APP_VERSION):'Τι νέο'}</h2>${items.length?items.map(c=>`<h3>Έκδοση ${esc(c.version)} <span class="mut">${esc(c.date||'')}</span></h3><ul style="margin:0 0 8px;padding-left:20px">${(c.notes||[]).map(n=>`<li>${esc(n)}</li>`).join('')}</ul>`).join(''):'<p class="mut">Δεν υπάρχουν σημειώσεις.</p>'}<div class="acts"><button type="button" class="pri" data-act="close">Εντάξει</button></div>`,()=>{});
+}
+function afterStart(){
+ if(D.settings.pendingNews&&vcmp(APP_VERSION,D.settings.pendingNews)>=0){delete D.settings.pendingNews;persist();setTimeout(()=>showNews(APP_VERSION),400)}
+ if(D.settings.seenVersion&&vcmp(APP_VERSION,D.settings.seenVersion)>0&&!$('#dlg').open)setTimeout(()=>{if(!$('#dlg').open)showNews(APP_VERSION)},600);
+ D.settings.seenVersion=APP_VERSION;persist();
+ setTimeout(()=>checkUpdate(false),2500);
+ setInterval(()=>checkUpdate(false),3*3600e3);
+}
+
 /* ---------- Χειρισμός κλικ ---------- */
 let installEvt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(TAB==='per')render()});
@@ -710,6 +754,8 @@ document.addEventListener('click',async e=>{
   case 'period':D.settings.period=+b.dataset.v;persist();render();break;
   case 'printbp':printBp();break;
   case 'addmed':medForm();break;
+  case 'checkupd':checkUpdate(true);break;
+  case 'whatsnew':showNews(null);break;
   case 'aiphoto':if(!getKey()){askKey();break}$('#camIn').click();break;
   case 'ainame':{const nm=$('#dform [name=name]').value.trim();if(!nm){alert('Γράψτε πρώτα το όνομα του φαρμάκου.');break}if(!getKey()){askKey();break}aiRun(null,nm);break}
   case 'savekey':setKey($('#orkey').value.trim());$('#keystat').textContent=getKey()?'✓ Αποθηκεύτηκε':'Το κλειδί σβήστηκε';break;
@@ -760,11 +806,13 @@ if('serviceWorker' in navigator){
  navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.take)handleTake(e.data.take)});
 }
 const qp=new URLSearchParams(location.search);
-if(qp.get('take')){handleTake(qp.get('take'));history.replaceState(null,'',location.pathname)}
+if(qp.get('take'))handleTake(qp.get('take'));
+if(qp.get('take')||qp.get('v'))history.replaceState(null,'',location.pathname);
 render();
 checkReminders();
 setInterval(checkReminders,30000);
-document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();render()}});
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();render();const lc=D.settings.lastCheck?+new Date(D.settings.lastCheck):0;if(Date.now()-lc>30*60e3)checkUpdate(false)}});
+afterStart();
 </script>
 </body>
 </html>
