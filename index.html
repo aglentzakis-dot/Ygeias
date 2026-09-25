@@ -121,7 +121,7 @@ details summary{cursor:pointer}
 </style>
 </head>
 <body>
-<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small><div><button id="pbtn" class="pchip" data-act="people">👤</button> <button id="lbtn" class="pchip notr" data-act="lang" aria-label="Γλώσσα">🇬🇷</button></div></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
+<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small><div><button id="pbtn" class="pchip" data-act="people">👤</button> <button id="lbtn" class="pchip notr" data-act="lang" aria-label="Γλώσσα">🇬🇷</button> <button id="ubtn" class="pchip" data-act="checkupd" aria-label="Έλεγχος για αναβάθμιση">⟳ Αναβάθμιση</button></div></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
 <div id="banner"></div>
 <main>
  <section class="tab on" id="t-sim"></section>
@@ -152,7 +152,7 @@ details summary{cursor:pointer}
 <script>
 "use strict";
 /* ---------- Βασικά ---------- */
-const APP_VERSION='1.6.0';
+const APP_VERSION='1.7.0';
 const SUB='Fakelos-Ygeias', PKEY='fakelosYgeias_people';
 let PEOPLE=(()=>{try{const x=JSON.parse(localStorage.getItem(PKEY));if(x&&x.list&&x.list.length)return x}catch(e){}return{list:[{id:'p1',key:'fakelosYgeias'}],cur:'p1'}})();
 let KEY=(PEOPLE.list.find(p=>p.id===PEOPLE.cur)||PEOPLE.list[0]).key;
@@ -473,8 +473,8 @@ function rPer(){
  <p class="mut">Οι ειδοποιήσεις της εφαρμογής βγαίνουν όταν αυτή είναι ανοιχτή ή πρόσφατα ανοιγμένη. Για υπενθύμιση που χτυπάει σίγουρα, ακόμη κι όταν η εφαρμογή είναι κλειστή, περάστε τις ώρες στο ημερολόγιο του κινητού:</p>
  <button class="wide" data-act="ics">📅 Προσθήκη στο ημερολόγιο του κινητού</button>
  <p class="mut">Αν αλλάξετε ώρες ή φάρμακα, διαγράψτε τα παλιά συμβάντα από το ημερολόγιο και ξαναπατήστε το κουμπί.</p></div>
- <div class="card"><h2>Αντίγραφα ασφαλείας ${hq('backup')}</h2><div class="mut" id="bkinfo">…</div>
- <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button data-act="pickfolder">📁 Επιλογή φακέλου</button><button class="small" data-act="clearfolder">✕ Ξεχάστε τον φάκελο</button></div></div>
+ <div class="card"><h2>Αντίγραφα ασφαλείας ${hq('backup')}</h2><div class="mut" id="bkinfo">…</div><div class="mut" id="autoinfo" style="margin-top:8px"></div>
+ <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">💾 Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button data-act="pickfolder">📁 Επιλογή φακέλου</button><button class="small" data-act="clearfolder">✕ Ξεχάστε τον φάκελο</button></div></div>
  <div class="card"><h2>Εγκατάσταση στο κινητό</h2><div class="mut">Άντροιντ (Χρώμιο): μενού ⋮ → «Προσθήκη στην αρχική οθόνη» ή «Εγκατάσταση εφαρμογής».<br>Άιφον (Σαφάρι): κουμπί κοινοποίησης → «Προσθήκη στην οθόνη Αφετηρίας».</div>${installEvt?'<button class="pri wide" style="margin-top:8px" data-act="install">Εγκατάσταση</button>':''}</div>
  <div class="card"><h2>Σημαντικό</h2><div class="mut">Τα δεδομένα μένουν μόνο στο κινητό σας και στον φάκελο αντιγράφων — δεν στέλνονται πουθενά. Η εφαρμογή βοηθά στην καταγραφή και δεν αντικαθιστά τον γιατρό σας. Μην αλλάζετε ή διακόπτετε φάρμακα χωρίς οδηγία γιατρού.</div>
  <button class="small danger" style="margin-top:10px" data-act="wipe">Διαγραφή όλων των δεδομένων</button></div>`;
@@ -867,7 +867,7 @@ const HELP={
  card:['Κάρτα για γιατρό','Όλα όσα θα σας ρωτήσουν σε νοσοκομείο ή ιατρείο, σε μία οθόνη: αλλεργίες, ενεργά φάρμακα με ώρες, όσα διακόψατε πρόσφατα, πίεση, επαφή έκτακτης ανάγκης.<br><br>Πατήστε σε οποιοδήποτε πεδίο για να το αλλάξετε. «Μεγάλα γράμματα» για να το δείξετε εύκολα, «Αποστολή» για να το στείλετε με μήνυμα.'],
  cardmeds:['Ενεργά φάρμακα','Η λίστα ενημερώνεται μόνη της από την καρτέλα «Φάρμακα». Για αλλαγές πηγαίνετε εκεί.'],
  remind:['Υπενθυμίσεις','Οι ειδοποιήσεις της εφαρμογής βγαίνουν όταν είναι ανοιχτή ή πρόσφατα ανοιγμένη. Για υπενθύμιση που χτυπάει σίγουρα, πατήστε «Προσθήκη στο ημερολόγιο του κινητού»: οι ώρες μπαίνουν στο ημερολόγιο του τηλεφώνου με ειδοποίηση.'],
- backup:['Αντίγραφα ασφαλείας','Τα δεδομένα είναι μόνο στο κινητό. Αν σβηστεί το ιστορικό του προγράμματος περιήγησης, χάνονται. Το αντίγραφο γράφεται στον κοινό φάκελο αντιγράφων των εφαρμογών σας, μέσα στον υποφάκελο «Fakelos-Ygeias», και γίνεται αυτόματα μετά από κάθε αλλαγή, όταν ο φάκελος έχει επιλεγεί.'],
+ backup:['Αντίγραφα ασφαλείας','<b>Αυτόματα:</b> σε κάθε αλλαγή η εφαρμογή κρατά μόνη της αντίγραφο μέσα στο κινητό, χωρίς να ρωτάει. Κρατιούνται τα 3 τελευταία — το παλιότερο σβήνεται. Βοηθούν αν κάτι πάει στραβά, όμως χάνονται αν σβηστούν τα δεδομένα του προγράμματος περιήγησης.<br><br><b>Στον φάκελό σας:</b> με το «💾 Αντίγραφο τώρα» το αντίγραφο γράφεται στον κοινό φάκελο Backup (υποφάκελος «Fakelos-Ygeias»), ένα αρχείο ανά ημέρα. Κάθε 10 αλλαγές η εφαρμογή σας θυμίζει να το κάνετε.<br><br>Η επαναφορά γίνεται από οποιοδήποτε από τα δύο.'],
  version:['Έκδοση','Η εφαρμογή ελέγχει μόνη της για νέα έκδοση όταν την ανοίγετε και αναβαθμίζεται αυτόματα. Τα δεδομένα σας δεν αλλάζουν.'],
  appts:['Ραντεβού & εξετάσεις','Γράψτε ραντεβού γιατρών και εξετάσεις. Την ημέρα του ραντεβού βγαίνει ειδοποίηση, και τα επόμενα 14 ημερών φαίνονται στην αρχική οθόνη. Στις σημειώσεις μπορείτε να κρατάτε και αποτελέσματα.']
 };
@@ -894,7 +894,7 @@ async function checkUpdate(manual){
    const busy=$('#dlg').open;
    if(manual||(!busy&&tried!==REMOTE.version)){say('⬇ Βρέθηκε η έκδοση '+esc(REMOTE.version)+' — αναβάθμιση…');toast('Αναβάθμιση στην έκδοση '+REMOTE.version+'…');setTimeout(()=>applyUpdate(REMOTE.version),800)}
    else say('Υπάρχει νέα έκδοση '+esc(REMOTE.version)+' — πατήστε «Έλεγχος για αναβάθμιση».');
-  }else say('✓ Έχετε την τελευταία έκδοση ('+APP_VERSION+') · έλεγχος '+hm(new Date()));
+  }else{say('✓ Έχετε την τελευταία έκδοση ('+APP_VERSION+') · έλεγχος '+hm(new Date()));if(manual)toast('✓ Έχετε την τελευταία έκδοση ('+APP_VERSION+')')}
  }catch(e){if(manual)say('✕ Δεν έγινε έλεγχος (χωρίς σύνδεση;)')}
 }
 async function showNews(v){
@@ -1707,6 +1707,94 @@ Object.assign(HELP,{
  bpmeterinfo:['Χρωματική μπάρα','Πατήστε πάνω στη μπάρα για να δείτε σε ποια ζώνη είναι η πίεση και τι σημαίνει.']
 });
 HELP.report=['Πλήρης αναφορά','Ένα έγγραφο για το ραντεβού με όλα: στοιχεία, αλλεργίες, γιατρούς, φάρμακα με τήρηση, πίεση και άλλες μετρήσεις του μήνα, εξετάσεις με την προηγούμενη τιμή, συμπτώματα και οι ερωτήσεις σας.<ul><li><b>PDF</b>: αρχείο που στέλνετε με Viber, email, μηνύματα κ.λπ. (ανοίγει η λίστα κοινοποίησης του κινητού)</li><li><b>Κείμενο</b>: στέλνεται ως απλό μήνυμα</li><li><b>Εκτύπωση</b>: σε εκτυπωτή ή «Αποθήκευση ως PDF»</li></ul>'];
+
+/* ================= ΕΚΔΟΣΗ 1.6.1 ================= */
+SPECS.splice(SPECS.indexOf('Οδοντίατρος'),1);SPECS.unshift('Οδοντίατρος');
+{const i=PREV.findIndex(x=>x.k==='dentist');if(i>0)PREV.unshift(PREV.splice(i,1)[0])}
+
+/* ---------- Γιατροί / επαφές: λίστα + ξεχωριστή σελίδα για κάθε έναν ---------- */
+const RW={contacts:{one:'επαφή',neu:'+ Νέα επαφή',nt:'Νέα επαφή',et:'Επεξεργασία επαφής',ic:'👤'},doctors:{one:'γιατρό',neu:'+ Νέος γιατρός',nt:'Νέος γιατρός',et:'Επεξεργασία γιατρού',ic:'🩺'}};
+function rowList(kind){return kind==='contacts'?contactsOf():doctorsOf()}
+function rowLine(kind,r){return kind==='contacts'?`<b>${u(r.name)}</b>${r.rel?' <span class="mut">('+u(r.rel)+')</span>':''} ${telLink(r.phone)}`:`${r.spec?'<span class="mut">'+esc(r.spec)+':</span> ':''}<b>${u(r.name)}</b> ${telLink(r.phone)}${addrText(r)?`<div class="mut" style="font-size:.85em"><span class="notr">${esc(addrText(r))}</span> ${pinLink(r)}</div>`:(r.coords?`<div>${pinLink(r)}</div>`:'')}${r.note?'<div class="mut" style="font-size:.85em">'+u(r.note)+'</div>':''}`}
+function rowsList(kind){const c=ROWCFG[kind],w=RW[kind],l=rowList(kind);
+ openDlg(`<h2>${c.t} ${hq(c.h)}</h2>
+ ${l.length?l.map((r,i)=>`<div class="dose"><div class="grow">${rowLine(kind,r)}</div><button type="button" class="small" data-act="rowedit" data-k="${kind}" data-i="${i}">✎</button></div>`).join(''):'<p class="mut">Δεν έχετε δηλώσει ακόμη.</p>'}
+ <button type="button" class="pri wide" style="margin-top:10px" data-act="rownew" data-k="${kind}">${w.neu}</button>
+ <div class="acts"><button type="button" data-act="close">Κλείσιμο</button></div>`,()=>{});
+}
+function rowForm(kind,i){const c=ROWCFG[kind],w=RW[kind],l=rowList(kind),isNew=i==null||i==='',r=isNew?{}:(l[+i]||{});
+ openDlg(`<h2>${w.ic} ${isNew?w.nt:w.et} ${hq(c.h)}</h2><datalist id="speclist">${SPECS.map(s=>`<option value="${s}">`).join('')}</datalist>
+ <div class="g2">${c.f.map(([k,lb,t])=>t==='coords'?`<div style="grid-column:1/-1">${coordsField('f_'+k,r[k])}</div>`:`<label ${k==='addr'||k==='note'?'style="grid-column:1/-1"':''}>${lb}<input name="f_${k}" value="${esc(r[k]||'')}" ${t==='tel'?'type="tel" inputmode="tel" autocomplete="off"':''} ${t==='spec'?'list="speclist"':''} ${k==='name'||(kind==='doctors'&&k==='spec')?'':''}></label>`).join('')}</div>
+ ${!isNew&&(r.addr||r.coords)?`<div style="margin-bottom:8px">${pinLink(r)}</div>`:''}
+ ${btns(!isNew?`<button type="button" class="danger" data-act="rowdelone" data-k="${kind}" data-i="${i}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const o={};c.f.forEach(([k])=>o[k]=String(fd.get('f_'+k)||'').trim());if(!o.name&&!o.phone&&!o.addr){alert('Συμπληρώστε τουλάχιστον όνομα ή τηλέφωνο.');return false}
+  const L=rowList(kind);if(isNew)L.push(o);else L[+i]=o;D.profile[kind]=L;if(kind==='contacts')D.profile.contact='';else D.profile.doctor='';save();render();toast('Αποθηκεύτηκε');
+  setTimeout(()=>rowsList(kind),50)});
+}
+rowsForm=function(kind){rowsList(kind)};
+listSec=function(kind,label){const l=rowList(kind),w=RW[kind];
+ return `<div class="lbl">${label} ${hq(ROWCFG[kind].h)}</div>${l.map((r,i)=>`<div class="edf" data-act="rowedit" data-k="${kind}" data-i="${i}" style="margin:4px -4px"><span class="pen">✎</span>${rowLine(kind,r)}</div>`).join('')}${l.length?'':'<div class="ph noprint">Δεν έχετε δηλώσει ακόμη.</div>'}<button class="small noprint" style="margin-top:4px" data-act="rownew" data-k="${kind}">${w.neu}</button>`};
+
+/* ---------- Αναφορά: αποστολή PDF, αποθήκευση PDF, κείμενο, εκτυπωτής ---------- */
+reportDlg=function(){
+ openDlg(`<h2>📑 Πλήρης αναφορά για γιατρό ${hq('report')}</h2><div class="mut" style="margin-bottom:10px">Στοιχεία, αλλεργίες, φάρμακα, πίεση και μετρήσεις του μήνα, εξετάσεις, συμπτώματα και οι ερωτήσεις σας.</div>
+ <button type="button" class="pri wide" data-act="reppdf" style="margin-bottom:8px">📤 Αποστολή PDF (Viber, email, μηνύματα…)</button>
+ <button type="button" class="wide" data-act="reppdfsave" style="margin-bottom:8px">⬇ Αποθήκευση PDF στο κινητό</button>
+ <button type="button" class="wide" data-act="reptext" style="margin-bottom:8px">💬 Αποστολή ως κείμενο</button>
+ <button type="button" class="wide" data-act="repprint" style="margin-bottom:8px">🖨 Εκτύπωση σε εκτυπωτή</button>
+ <div class="mut" id="repst" style="min-height:22px"></div><div class="acts"><button type="button" data-act="close">Κλείσιμο</button></div>`,()=>{});
+};
+async function buildReportPDF(){const box=offscreen(reportHTML());await new Promise(r=>setTimeout(r,80));const pages=htmlToPages(box);box.remove();
+ const blob=makePDF(pages.map(c=>({jpg:b64bytes(c.toDataURL('image/jpeg',0.8)),w:c.width,h:c.height})));return new File([blob],repName('pdf'),{type:'application/pdf'})}
+async function reportPDF2(mode){const st=$('#repst');const say=t=>{if(st)st.textContent=tr(t)};
+ try{say('⏳ Δημιουργία PDF…');const file=await buildReportPDF();
+  if(mode!=='save'&&navigator.canShare&&navigator.canShare({files:[file]})){say('');try{await navigator.share({files:[file],title:tr('Ιατρική αναφορά')});say('✓ Στάλθηκε')}catch(e){}}
+  else{saveBlob(file,file.name);say(mode==='save'?'✓ Το PDF αποθηκεύτηκε στις Λήψεις':'Η αποστολή αρχείου δεν υποστηρίζεται εδώ — το PDF αποθηκεύτηκε στις Λήψεις.')}
+ }catch(e){say('✕ '+e.message)}}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act]');if(!b||e.target.closest('nav button'))return;
+ switch(b.dataset.act){
+  case 'rowedit':rowForm(b.dataset.k,b.dataset.i);break;
+  case 'rownew':rowForm(b.dataset.k);break;
+  case 'rowdelone':{if(!confirm('Να διαγραφεί;'))break;const L=rowList(b.dataset.k);L.splice(+b.dataset.i,1);D.profile[b.dataset.k]=L;save();render();rowsList(b.dataset.k);break}
+  case 'reppdfsave':reportPDF2('save');break;
+ }
+},true);
+reportPDF=function(){return reportPDF2('share')};
+
+/* ================= ΕΚΔΟΣΗ 1.7 — αυτόματα αντίγραφα & υπενθύμιση ================= */
+function adb(){return new Promise((res,rej)=>{const r=indexedDB.open('fakelos-ygeias-auto',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('snap'))r.result.createObjectStore('snap')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function adbAll(){const db=await adb();return new Promise(res=>{const out=[];const tx=db.transaction('snap','readonly'),st=tx.objectStore('snap');[0,1,2].forEach(i=>{const q=st.get(i);q.onsuccess=()=>{if(q.result)out.push(Object.assign({slot:i},q.result))}});tx.oncomplete=()=>res(out.sort((a,b)=>a.t<b.t?1:-1));tx.onerror=()=>res(out)})}
+async function adbPut(slot,val){const db=await adb();return new Promise((res,rej)=>{const tx=db.transaction('snap','readwrite');tx.objectStore('snap').put(val,slot);tx.oncomplete=res;tx.onerror=()=>rej(tx.error)})}
+let snapT=null;
+async function autoSnap(){try{const all=await adbAll();const used=all.map(a=>a.slot);let slot=[0,1,2].find(i=>!used.includes(i));if(slot==null)slot=all[all.length-1].slot; // σβήνει το παλιότερο από τα 3
+ await adbPut(slot,{t:new Date().toISOString(),v:APP_VERSION,data:JSON.stringify(allData())})}catch(e){}}
+const CHGKEY='fakelosYgeias_chg';
+function chgGet(){try{return +localStorage.getItem(CHGKEY)||0}catch(e){return 0}}
+function chgSet(n){try{localStorage.setItem(CHGKEY,String(n))}catch(e){}}
+schedBackup=function(){clearTimeout(snapT);snapT=setTimeout(autoSnap,2500);const n=chgGet()+1;chgSet(n);if(n%10===0)setTimeout(()=>toast('💾 '+n+' αλλαγές από το τελευταίο αντίγραφο — καλό είναι να κάνετε αντίγραφο'),600)};
+{const _bn=backupNow;backupNow=async function(ask){const r=await _bn(ask);if(ask&&r){chgSet(0);setTimeout(()=>{if(TAB==='sim'||TAB==='per')render()},100)}return r}}
+bkCard=function(){const n=chgGet();if(n<10)return '';const lb=D.settings.lastBackup?new Date(D.settings.lastBackup):null;
+ return `<div class="card warn"><div class="row sp"><div class="grow"><b>💾 Ώρα για αντίγραφο ασφαλείας</b> ${hq('backup')}<div class="mut">Έχετε κάνει <b>${n}</b> αλλαγές από το τελευταίο αντίγραφο${lb?' ('+fmtS(lb)+')':''}. Πατήστε για να αποθηκευτεί στον φάκελό σας.</div></div><button class="pri small" data-act="backup">💾 Αντίγραφο</button></div></div>`};
+async function autoInfo(){const e=$('#autoinfo');if(!e)return;const l=await adbAll();
+ e.innerHTML=`<b>Αυτόματα (στο κινητό):</b> ${l.length?l.map(a=>fmtS(new Date(a.t))+' '+hm(new Date(a.t))).join(' · '):'—'}<br><span style="font-size:12px">Γίνονται μόνα τους σε κάθε αλλαγή· κρατιούνται τα 3 τελευταία. Προστατεύουν από λάθη, όχι από διαγραφή των δεδομένων του προγράμματος περιήγησης — γι' αυτό χρειάζεται και το «Αντίγραφο τώρα» στον φάκελό σας.</span><br><b>Αλλαγές από το τελευταίο αντίγραφο στον φάκελο:</b> ${chgGet()}`}
+restoreList=async function(){
+ const autos=await adbAll();let files=[];const root=await getRoot();
+ if(root){let ok=false;try{ok=(await root.queryPermission({mode:'readwrite'}))==='granted'}catch(e){}if(ok){try{const dir=await root.getDirectoryHandle(SUB,{create:true});for await(const [n,h] of dir.entries()){if(h.kind==='file'&&n.endsWith('.json'))files.push({n,h})}}catch(e){}files.sort((a,b)=>a.n<b.n?1:-1);files=files.slice(0,10)}}
+ window._rfiles=files;window._autos=autos;
+ openDlg(`<h2>Επαναφορά από αντίγραφο ${hq('backup')}</h2>
+ <h3>Αυτόματα αντίγραφα (στο κινητό)</h3>${autos.length?autos.map((a,i)=>`<button type="button" class="wide" style="margin-bottom:6px;text-align:left" data-act="restoreauto" data-i="${i}">🕘 ${fmtS(new Date(a.t))} ${hm(new Date(a.t))}:${pad(new Date(a.t).getSeconds())} ${i===0?'<span class="tag">νεότερο</span>':''}</button>`).join(''):'<p class="mut">Δεν υπάρχουν ακόμη.</p>'}
+ <h3>Αντίγραφα στον φάκελο</h3>${root?(files.length?files.map((f,i)=>`<button type="button" class="wide" style="margin-bottom:6px;text-align:left" data-act="restorefile" data-i="${i}">📄 ${esc(f.n)} ${i===0?'<span class="tag">νεότερο</span>':''}</button>`).join(''):`<button type="button" class="wide" style="margin-bottom:6px" data-act="restorefolder">📁 Άνοιγμα φακέλου «${esc(root.name)}/${SUB}»</button>`):'<p class="mut">Δεν έχει επιλεγεί φάκελος.</p>'}
+ <button type="button" class="wide" data-act="restorepick">Επιλογή αρχείου από αλλού…</button><div class="acts"><button type="button" data-act="close">Άκυρο</button></div>`,()=>{});
+};
+async function restoreFolder(){const root=await getRoot();if(!root||!(await perm(root,true)))return;restoreList()}
+document.addEventListener('click',e=>{const b=e.target.closest&&e.target.closest('[data-act]');if(!b||e.target.closest('nav button'))return;
+ switch(b.dataset.act){
+  case 'restoreauto':{const a=(window._autos||[])[+b.dataset.i];if(a)applyRestore(a.data);break}
+  case 'restorefolder':restoreFolder();break;
+ }
+});
+{const _r=render;render=function(){_r();if(TAB==='per')autoInfo()}}
+setTimeout(async()=>{const l=await adbAll();if(!l.length)autoSnap()},3000);
 
 {const _ct=cardText;cardText=function(){return tr(_ct())}}
 /* ---------- Χειρισμός κλικ ---------- */
