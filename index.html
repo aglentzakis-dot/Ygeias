@@ -82,6 +82,8 @@ legend{font-size:14px;color:var(--mut);padding:0 4px}
 .hcard table{font-size:1em}
 svg text{fill:var(--mut);font-size:10px}
 .bpv{font-weight:700}
+.aibox{background:var(--pri2);border-radius:12px;padding:10px;margin-bottom:12px}
+details summary{cursor:pointer}
 .list-day{margin-top:10px;font-weight:700;font-size:14px;color:var(--mut)}
 #print{display:none}
 @media print{
@@ -112,6 +114,7 @@ svg text{fill:var(--mut);font-size:10px}
 <dialog id="dlg"></dialog>
 <div id="toast"></div>
 <div id="print"></div>
+<input type="file" id="camIn" accept="image/*" capture="environment" style="display:none">
 <input type="file" id="fileIn" accept=".json,application/json" style="display:none">
 
 <script>
@@ -321,6 +324,9 @@ function rFar(){
   <div style="margin-top:6px">${m.dose?`<span class="tag">${esc(m.dose)}</span>`:''}${m.prn?'<span class="tag">όταν χρειάζεται</span>':(m.times||[]).map(t=>`<span class="tag">⏰ ${t}</span>`).join('')}${m.days&&m.days.length&&m.days.length<7?`<span class="tag">${m.days.map(d=>MERES_S[d]).join(' ')}</span>`:''}${m.food?`<span class="tag">${FOOD[m.food]}</span>`:''}</div>
   <div class="mut" style="margin-top:6px">${m.doctor?'Γιατρός: '+esc(m.doctor)+' · ':''}${m.start?'Από '+fmtS(fromKey(m.start)):''}${m.until?' έως '+fmtS(fromKey(m.until)):''}${!m.active&&m.end?' · Διακοπή '+fmtS(fromKey(m.end)):''}</div>
   ${!m.active&&m.endReason?`<div class="mut">Λόγος διακοπής: ${esc(m.endReason)}</div>`:''}
+  ${m.sideEffects?`<details style="margin-top:6px"><summary><b>Παρενέργειες</b></summary><div class="mut">${esc(m.sideEffects)}</div></details>`:''}
+  ${m.warnings?`<details style="margin-top:4px"><summary><b>Προσοχή / αλληλεπιδράσεις</b></summary><div class="mut">${esc(m.warnings)}</div></details>`:''}
+  ${m.ai?`<div class="mut" style="font-size:12px;margin-top:4px">🤖 Πληροφορίες από τεχνητή νοημοσύνη — επιβεβαιώστε με το φύλλο οδηγιών ή τον φαρμακοποιό.</div>`:''}
   ${m.notes?`<div class="mut">Σημειώσεις: ${esc(m.notes)}</div>`:''}
   ${dl!=null?`<div class="mut" style="${dl<=7?'color:var(--red);font-weight:600':''}">Απόθεμα: ${m.stock} τεμ. (≈ ${dl} ημέρες)</div>`:''}
   ${ad!=null?`<div class="mut">Τήρηση 30 ημερών: <b>${ad}%</b></div>`:''}
@@ -375,6 +381,12 @@ function rPer(){
  <div class="card"><div class="row sp"><h2 style="margin:0">Ραντεβού & εξετάσεις</h2><button class="pri small" data-act="addappt">+ Νέο</button></div>
  ${fut.length?fut.map(apRow).join(''):'<p class="mut">Κανένα ερχόμενο ραντεβού.</p>'}
  ${past.length?`<h3>Προηγούμενα</h3>${past.slice(0,20).map(apRow).join('')}`:''}</div>
+ <div class="card"><h2>Τεχνητή νοημοσύνη (δωρεάν)</h2>
+ <div class="mut">Για την αναγνώριση φαρμάκων από φωτογραφία. Χρειάζεται δωρεάν κλειδί από το OpenRouter, χωρίς κάρτα. Αν έχετε ήδη κλειδί από το Identify-AI, βάλτε το ίδιο.</div>
+ <label style="margin-top:8px">Κλειδί<input type="password" id="orkey" value="${esc(getKey())}" placeholder="sk-or-..." autocomplete="off"></label>
+ <div class="row"><button class="pri" data-act="savekey">Αποθήκευση</button><button data-act="testkey">Δοκιμή</button><a class="btn" href="https://openrouter.ai/settings/keys" target="_blank" rel="noopener" style="text-decoration:none">Πάρτε κλειδί ↗</a></div>
+ <div class="mut" id="keystat" style="margin-top:6px"></div>
+ <div class="mut" style="margin-top:6px">Το κλειδί μένει μόνο σε αυτή τη συσκευή και δεν μπαίνει στα αντίγραφα ασφαλείας.</div></div>
  <div class="card"><h2>Υπενθυμίσεις</h2>
  <div>Ειδοποιήσεις εφαρμογής: <b>${permT}</b></div>
  ${perm==='default'?'<button class="pri wide" style="margin-top:8px" data-act="notifon">Ενεργοποίηση ειδοποιήσεων</button>':''}
@@ -425,6 +437,8 @@ function medForm(m){
  const n=!m;m=m||{times:['08:00'],active:true,days:[]};
  const alld=!m.days||!m.days.length||m.days.length===7;
  openDlg(`<h2>${n?'Νέο φάρμακο':'Επεξεργασία φαρμάκου'}</h2>
+ <div class="aibox"><div class="row"><button type="button" class="pri grow" data-act="aiphoto">📷 Φωτογραφία κουτιού</button><button type="button" class="grow" data-act="ainame">🔎 Βρες από το όνομα</button></div>
+ <div class="mut" id="aistat" style="margin-top:6px">Η τεχνητή νοημοσύνη διαβάζει το κουτί και συμπληρώνει τι κάνει, δραστική ουσία και παρενέργειες.</div></div>
  <label>Όνομα φαρμάκου *<input name="name" required value="${esc(m.name||'')}" placeholder="όπως γράφει το κουτί"></label>
  <div class="g2"><label>Περιεκτικότητα<input name="strength" value="${esc(m.strength||'')}" placeholder="π.χ. 5 mg"></label><label>Μορφή<select name="form"><option value="">—</option>${FORMS.map(f=>`<option ${m.form===f?'selected':''}>${f}</option>`).join('')}</select></label></div>
  <label>Δραστική ουσία<input name="substance" value="${esc(m.substance||'')}"></label>
@@ -438,7 +452,10 @@ function medForm(m){
  <div class="g2"><label>Έναρξη<input type="date" name="start" value="${m.start||dkey(new Date())}"></label><label>Λήξη (αν είναι σχήμα π.χ. 7 ημερών)<input type="date" name="until" value="${m.until||''}"></label></div>
  <label>Γιατρός που το έγραψε<input name="doctor" value="${esc(m.doctor||'')}"></label>
  <div class="g2"><label>Απόθεμα (τεμάχια)<input type="number" inputmode="numeric" name="stock" min="0" value="${m.stock??''}"></label><label>Τεμάχια ανά λήψη<input type="number" inputmode="decimal" step="0.25" name="perDose" min="0" value="${m.perDose||1}"></label></div>
- <label>Σημειώσεις / παρενέργειες<textarea name="notes">${esc(m.notes||'')}</textarea></label>
+ <label>Συχνές παρενέργειες<textarea name="sideEffects">${esc(m.sideEffects||'')}</textarea></label>
+ <label>Προσοχή / αλληλεπιδράσεις<textarea name="warnings">${esc(m.warnings||'')}</textarea></label>
+ <label>Σημειώσεις<textarea name="notes">${esc(m.notes||'')}</textarea></label>
+ <input type="hidden" name="ai" value="${m.ai?'1':''}">
  ${btns(!n?`<button type="button" class="danger" data-act="delmed" data-id="${m.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
  fd=>{
   const prn=!!fd.get('prn');
@@ -446,7 +463,7 @@ function medForm(m){
   if(!prn&&!times.length){alert('Βάλτε τουλάχιστον μία ώρα λήψης ή επιλέξτε «όταν χρειάζεται».');return false}
   const days=fd.get('alldays')?[]:fd.getAll('day').map(Number);
   if(!prn&&!fd.get('alldays')&&!days.length){alert('Επιλέξτε ημέρες ή «Κάθε μέρα».');return false}
-  const o=Object.assign({},m,{id:m.id||uid(),name:fd.get('name').trim(),strength:fd.get('strength').trim(),form:fd.get('form'),substance:fd.get('substance').trim(),purpose:fd.get('purpose').trim(),dose:fd.get('dose').trim(),food:fd.get('food'),prn,times:prn?[]:times,days,start:fd.get('start'),until:fd.get('until'),doctor:fd.get('doctor').trim(),stock:fd.get('stock')===''?'':+fd.get('stock'),perDose:+fd.get('perDose')||1,notes:fd.get('notes').trim()});
+  const o=Object.assign({},m,{id:m.id||uid(),name:fd.get('name').trim(),strength:fd.get('strength').trim(),form:fd.get('form'),substance:fd.get('substance').trim(),purpose:fd.get('purpose').trim(),dose:fd.get('dose').trim(),food:fd.get('food'),prn,times:prn?[]:times,days,start:fd.get('start'),until:fd.get('until'),doctor:fd.get('doctor').trim(),stock:fd.get('stock')===''?'':+fd.get('stock'),perDose:+fd.get('perDose')||1,notes:fd.get('notes').trim(),sideEffects:(fd.get('sideEffects')||'').trim(),warnings:(fd.get('warnings')||'').trim(),ai:!!fd.get('ai')});
   if(n){o.active=true;o.history=[];addHist(o,'Έναρξη: '+[o.strength,o.dose,freqText(o)].filter(Boolean).join(' · '));D.meds.push(o)}
   else{
    const ch=[];
@@ -617,6 +634,67 @@ function applyRestore(text){
   D=fix(x);persist();$('#dlg').open&&$('#dlg').close();render();toast('Έγινε επαναφορά')}catch(e){alert('Το αρχείο δεν είναι έγκυρο αντίγραφο αυτής της εφαρμογής.')}
 }
 
+/* ---------- Τεχνητή νοημοσύνη (OpenRouter, δωρεάν μοντέλα) ---------- */
+const KKEY='fakelosYgeias_orkey';
+function getKey(){try{let k=localStorage.getItem(KKEY);if(k)return k;
+ // ίδιο κλειδί με άλλες εφαρμογές του ίδιου ιστότοπου (π.χ. Identify-AI)
+ for(let i=0;i<localStorage.length;i++){const n=localStorage.key(i),v=localStorage.getItem(n)||'';const mt=v.match(/sk-or-v1-[A-Za-z0-9]{20,}/);if(mt){localStorage.setItem(KKEY,mt[0]);return mt[0]}}}catch(e){}return ''}
+function setKey(k){try{k?localStorage.setItem(KKEY,k):localStorage.removeItem(KKEY)}catch(e){}}
+function askKey(){if(confirm('Για την αναγνώριση χρειάζεται δωρεάν κλειδί OpenRouter (χωρίς κάρτα).\nΝα πάτε στις ρυθμίσεις για να το βάλετε;')){$('#dlg').close();showTab('per');setTimeout(()=>{const e=$('#orkey');e&&e.scrollIntoView({block:'center'});e&&e.focus()},100)}}
+async function freeModels(force){
+ const c=D.settings.aiModels;
+ if(!force&&c&&c.t>Date.now()-864e5&&c.list.length)return c.list;
+ const r=await fetch('https://openrouter.ai/api/v1/models');if(!r.ok)throw new Error('Δεν βρέθηκε λίστα μοντέλων');
+ const j=await r.json();
+ const list=(j.data||[]).filter(m=>{const a=m.architecture||{},p=m.pricing||{};return (a.input_modalities||[]).includes('image')&&(a.output_modalities||['text']).includes('text')&&+p.prompt===0&&+(p.completion||0)===0&&!/stealth|alpha/i.test(m.id)})
+  .sort((a,b)=>(b.context_length||0)-(a.context_length||0)).map(m=>m.id);
+ if(!list.length)throw new Error('Αυτή τη στιγμή δεν υπάρχουν δωρεάν μοντέλα με εικόνα');
+ D.settings.aiModels={t:Date.now(),list};persist();return list;
+}
+async function aiCall(content,models){
+ let last='';
+ for(const model of models){
+  try{
+   const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{method:'POST',headers:{'Authorization':'Bearer '+getKey(),'Content-Type':'application/json','X-Title':'Fakelos Ygeias'},
+    body:JSON.stringify({model,messages:[{role:'user',content}],temperature:0.2,max_tokens:1500})});
+   const j=await r.json().catch(()=>({}));
+   if(r.status===401)throw Object.assign(new Error('Το κλειδί δεν είναι σωστό'),{fatal:true});
+   if(!r.ok||j.error){last=(j.error&&j.error.message)||('σφάλμα '+r.status);continue}
+   const txt=(j.choices&&j.choices[0]&&j.choices[0].message&&j.choices[0].message.content)||'';
+   const t=Array.isArray(txt)?txt.map(x=>x.text||'').join(''):txt;
+   const a=t.indexOf('{'),b=t.lastIndexOf('}');if(a<0||b<a){last='ακατάλληλη απάντηση';continue}
+   return JSON.parse(t.slice(a,b+1));
+  }catch(e){if(e.fatal)throw e;last=e.message}
+ }
+ throw new Error('Δεν απάντησε κανένα δωρεάν μοντέλο ('+last+'). Δοκιμάστε ξανά σε λίγο.');
+}
+function shrink(file){return new Promise((res,rej)=>{const img=new Image(),u=URL.createObjectURL(file);img.onload=()=>{const M=1400,k=Math.min(1,M/Math.max(img.width,img.height)),c=document.createElement('canvas');c.width=Math.round(img.width*k);c.height=Math.round(img.height*k);c.getContext('2d').drawImage(img,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',0.85))};img.onerror=()=>rej(new Error('Η φωτογραφία δεν διαβάστηκε'));img.src=u})}
+const AI_PROMPT=`Είσαι βοηθός φαρμακοποιού. ΣΤΟΧΟΣ: αναγνώρισε το φάρμακο ΚΑΙ δώσε πληροφορίες στα ελληνικά, απλά για ασθενή.
+Απάντησε ΜΟΝΟ με ένα αντικείμενο JSON, χωρίς άλλο κείμενο, με τα πεδία:
+{"name":"εμπορική ονομασία όπως γράφει στο κουτί","strength":"περιεκτικότητα π.χ. 5 mg","form":"ένα από: ${FORMS.join(', ')}","substance":"δραστική ουσία","purpose":"τι κάνει και για ποιες παθήσεις δίνεται, 1-2 προτάσεις","food":"ένα από: prin, me, meta, nistis, adiaforo ή κενό αν δεν ξέρεις","sideEffects":"οι πιο συχνές παρενέργειες, σύντομα, χωρισμένες με κόμμα","warnings":"σημαντικές προφυλάξεις και αλληλεπιδράσεις (π.χ. αλκοόλ, άλλα φάρμακα), σύντομα","confidence":"υψηλή, μέτρια ή χαμηλή"}
+Αν δεν μπορείς να το αναγνωρίσεις, βάλε "name":"" και "confidence":"χαμηλή". Μην επινοείς ονομασίες.`;
+async function aiRun(file,name){
+ const st=$('#aistat'),btns=document.querySelectorAll('[data-act=aiphoto],[data-act=ainame]');
+ const set=t=>{if(st)st.innerHTML=t};btns.forEach(b=>b.disabled=true);
+ try{
+  set('⏳ Ετοιμασία…');const content=[{type:'text',text:AI_PROMPT+(name?'\nΤο φάρμακο είναι: '+name:'\nΔες τη φωτογραφία της συσκευασίας.')}];
+  if(file){const url=await shrink(file);content.push({type:'image_url',image_url:{url}})}
+  const models=await freeModels(false);
+  set('⏳ Η τεχνητή νοημοσύνη αναζητά το φάρμακο…');
+  let r;try{r=await aiCall(content,models.slice(0,6))}catch(e){if(e.fatal)throw e;r=await aiCall(content,(await freeModels(true)).slice(0,6))}
+  if(!r||(!r.name&&!r.substance)){set('✕ Δεν αναγνωρίστηκε. Τραβήξτε πιο καθαρά την πλευρά με το όνομα, με καλό φως.');return}
+  const f=$('#dform');if(!f)return;
+  const put=(n,v)=>{if(v&&f.elements[n])f.elements[n].value=String(v).trim()};
+  put('name',r.name||name);put('strength',r.strength);put('substance',r.substance);put('purpose',r.purpose);put('sideEffects',r.sideEffects);put('warnings',r.warnings);
+  if(r.form&&FORMS.includes(r.form))f.elements.form.value=r.form;
+  if(r.food&&FOOD[r.food]!==undefined&&r.food)f.elements.food.value=r.food;
+  f.elements.ai.value='1';
+  set(`✓ Συμπληρώθηκε${r.confidence?' (βεβαιότητα: '+esc(r.confidence)+')':''}. <b>Ελέγξτε τα στοιχεία</b> και βάλτε ώρες και δόση όπως σας τα έγραψε ο γιατρός.`);
+ }catch(e){set('✕ '+esc(e.message))}
+ finally{btns.forEach(b=>b.disabled=false)}
+}
+$('#camIn').addEventListener('change',e=>{const f=e.target.files[0];e.target.value='';if(f)aiRun(f,($('#dform [name=name]')||{}).value||'')});
+
 /* ---------- Χειρισμός κλικ ---------- */
 let installEvt=null;
 addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(TAB==='per')render()});
@@ -632,6 +710,10 @@ document.addEventListener('click',async e=>{
   case 'period':D.settings.period=+b.dataset.v;persist();render();break;
   case 'printbp':printBp();break;
   case 'addmed':medForm();break;
+  case 'aiphoto':if(!getKey()){askKey();break}$('#camIn').click();break;
+  case 'ainame':{const nm=$('#dform [name=name]').value.trim();if(!nm){alert('Γράψτε πρώτα το όνομα του φαρμάκου.');break}if(!getKey()){askKey();break}aiRun(null,nm);break}
+  case 'savekey':setKey($('#orkey').value.trim());$('#keystat').textContent=getKey()?'✓ Αποθηκεύτηκε':'Το κλειδί σβήστηκε';break;
+  case 'testkey':{setKey($('#orkey').value.trim());const st=$('#keystat');st.textContent='Έλεγχος…';try{const ms=await freeModels(true);await aiCall([{type:'text',text:'Απάντησε μόνο: {"ok":true}'}],ms.slice(0,4));st.textContent='✓ Λειτουργεί ('+ms.length+' δωρεάν μοντέλα με εικόνα)'}catch(e){st.textContent='✕ '+e.message}break}
   case 'editmed':medForm(med);break;
   case 'delmed':if(confirm('Οριστική διαγραφή του φαρμάκου και του ιστορικού του;\nΑν απλώς σταματήσατε να το παίρνετε, προτιμήστε «Διακοπή».')){D.meds=D.meds.filter(m=>m.id!==id);save();$('#dlg').close();render()}break;
   case 'stopmed':stopForm(med);break;
