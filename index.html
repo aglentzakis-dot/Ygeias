@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="el">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Φάκελος Υγείας</title>
+<meta name="theme-color" content="#0f766e">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Υγεία">
+<style>
+:root{--bg:#f3f6f5;--card:#fff;--tx:#17201e;--mut:#5f6b68;--line:#dde4e2;--pri:#0f766e;--onpri:#fff;--pri2:#dff2ee;--head:#0f766e;--red:#c62828;--redbg:#fdecea;--orange:#d9700f;--yellow:#b58f00;--green:#2e7d32;--blue:#1565c0;--sh:0 1px 3px rgba(0,0,0,.08)}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1312;--card:#192120;--tx:#e7eeec;--mut:#9aa8a4;--line:#2b3533;--pri:#2dd4bf;--onpri:#05201d;--pri2:#11342f;--head:#0b4f49;--red:#ef5350;--redbg:#3a1b1b;--orange:#f39c4a;--yellow:#e6c229;--green:#66bb6a;--blue:#64b5f6;--sh:none}}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{background:var(--bg);color:var(--tx);font:16px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding-bottom:calc(78px + env(safe-area-inset-bottom))}
+header{position:sticky;top:0;z-index:5;background:var(--head);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 16px 10px;display:flex;align-items:center;justify-content:space-between;gap:8px}
+header h1{font-size:19px;margin:0}
+header small{opacity:.85;font-size:13px}
+main{max-width:720px;margin:0 auto;padding:12px 14px}
+section.tab{display:none}section.tab.on{display:block}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:14px;margin:0 0 12px;box-shadow:var(--sh)}
+.card h2{font-size:17px;margin:0 0 10px}
+.card h3{font-size:15px;margin:12px 0 6px}
+.mut{color:var(--mut);font-size:14px}
+.big{font-size:30px;font-weight:700;line-height:1.1}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sp{justify-content:space-between}
+.grow{flex:1;min-width:0}
+button,.btn{font:inherit;border:1px solid var(--line);background:var(--card);color:var(--tx);border-radius:10px;padding:9px 13px;cursor:pointer;min-height:42px}
+button.pri{background:var(--pri);color:var(--onpri);border-color:var(--pri);font-weight:600}
+button.ok{background:var(--green);color:#fff;border-color:var(--green);font-weight:600}
+button.danger{color:var(--red);border-color:var(--red)}
+button.small{min-height:34px;padding:5px 10px;font-size:14px}
+button.wide{width:100%}
+button:disabled{opacity:.5}
+.chips{display:flex;gap:6px;flex-wrap:wrap}
+.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:14px;background:var(--card);min-height:34px}
+.chip.on{background:var(--pri);color:var(--onpri);border-color:var(--pri)}
+.tag{display:inline-block;border-radius:999px;padding:2px 9px;font-size:13px;background:var(--pri2);color:var(--tx);margin:2px 4px 2px 0}
+.dose{display:flex;gap:10px;align-items:flex-start;padding:10px 0;border-top:1px solid var(--line)}
+.dose:first-of-type{border-top:0}
+.dose .t{font-weight:700;font-size:18px;min-width:56px}
+.dose.late .t{color:var(--red)}
+.dose.done{opacity:.65}
+.st{font-size:14px;font-weight:600}
+.warn{background:var(--redbg);border-color:var(--red)}
+.pill{width:12px;height:12px;border-radius:50%;display:inline-block;margin-right:6px;vertical-align:middle}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:7px 5px;border-bottom:1px solid var(--line);vertical-align:top}
+th{color:var(--mut);font-weight:600}
+nav{position:fixed;bottom:0;left:0;right:0;z-index:6;background:var(--card);border-top:1px solid var(--line);display:flex;padding-bottom:env(safe-area-inset-bottom)}
+nav button{flex:1;border:0;border-radius:0;background:none;padding:7px 2px 6px;min-height:62px;font-size:12px;color:var(--mut);display:flex;flex-direction:column;align-items:center;gap:2px}
+nav button span{font-size:22px;line-height:1}
+nav button.on{color:var(--pri);font-weight:700}
+dialog{border:0;border-radius:16px;padding:0;width:min(560px,96vw);max-height:92vh;background:var(--card);color:var(--tx)}
+dialog::backdrop{background:rgba(0,0,0,.45)}
+dialog form{padding:16px}
+dialog h2{margin:0 0 12px;font-size:19px}
+label{display:block;font-size:14px;color:var(--mut);margin:0 0 10px}
+input,select,textarea{display:block;width:100%;font:inherit;color:var(--tx);background:var(--bg);border:1px solid var(--line);border-radius:10px;padding:10px;margin-top:4px;min-height:44px}
+textarea{min-height:70px;resize:vertical}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+fieldset{border:1px solid var(--line);border-radius:10px;margin:0 0 10px;padding:8px 10px}
+legend{font-size:14px;color:var(--mut);padding:0 4px}
+.ck{display:inline-flex;align-items:center;gap:5px;margin:4px 10px 4px 0;color:var(--tx);font-size:15px}
+.ck input{width:auto;min-height:0;margin:0}
+.acts{display:flex;gap:8px;justify-content:flex-end;margin-top:6px;flex-wrap:wrap}
+.times{display:flex;flex-direction:column;gap:6px;margin-bottom:6px}
+.times .row input{flex:1;margin:0}
+#toast{position:fixed;left:50%;bottom:calc(90px + env(safe-area-inset-bottom));transform:translateX(-50%);background:#222;color:#fff;padding:10px 16px;border-radius:10px;font-size:15px;opacity:0;pointer-events:none;transition:.25s;z-index:20;max-width:90vw;text-align:center}
+#toast.on{opacity:1}
+#banner{display:none;position:sticky;top:0;z-index:4;background:var(--orange);color:#fff;padding:10px 14px;font-weight:600}
+.hcard{font-size:16px}
+.hcard.bigtxt{font-size:21px}
+.hcard .lbl{color:var(--mut);font-size:.8em;margin-top:8px}
+.hcard .al{color:var(--red);font-weight:700}
+.hcard table{font-size:1em}
+svg text{fill:var(--mut);font-size:10px}
+.bpv{font-weight:700}
+.list-day{margin-top:10px;font-weight:700;font-size:14px;color:var(--mut)}
+#print{display:none}
+@media print{
+ body{background:#fff;color:#000;padding:0}
+ body.printing>*:not(#print){display:none!important}
+ body.printing #print{display:block;padding:10mm;font-size:12pt}
+ #print table{font-size:10.5pt}#print th,#print td{border-bottom:1px solid #999;color:#000}
+}
+</style>
+</head>
+<body>
+<header><div><h1>Φάκελος Υγείας</h1><small id="hdate"></small></div><button class="small" data-act="addbp" style="background:#ffffff22;color:#fff;border-color:#ffffff55">+ Πίεση</button></header>
+<div id="banner"></div>
+<main>
+ <section class="tab on" id="t-sim"></section>
+ <section class="tab" id="t-pie"></section>
+ <section class="tab" id="t-far"></section>
+ <section class="tab" id="t-kar"></section>
+ <section class="tab" id="t-per"></section>
+</main>
+<nav>
+ <button data-tab="sim" class="on"><span>🏠</span>Σήμερα</button>
+ <button data-tab="pie"><span>❤️</span>Πίεση</button>
+ <button data-tab="far"><span>💊</span>Φάρμακα</button>
+ <button data-tab="kar"><span>🏥</span>Κάρτα</button>
+ <button data-tab="per"><span>☰</span>Περισσότερα</button>
+</nav>
+<dialog id="dlg"></dialog>
+<div id="toast"></div>
+<div id="print"></div>
+<input type="file" id="fileIn" accept=".json,application/json" style="display:none">
+
+<script>
+"use strict";
+/* ---------- Βασικά ---------- */
+const KEY='fakelosYgeias', SUB='Fakelos-Ygeias';
+const $=s=>document.querySelector(s);
+const pad=n=>String(n).padStart(2,'0');
+const dkey=d=>d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());
+const hm=d=>pad(d.getHours())+':'+pad(d.getMinutes());
+const uid=()=>Date.now().toString(36)+Math.random().toString(36).slice(2,7);
+const esc=s=>String(s==null?'':s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const MERES=['Κυριακή','Δευτέρα','Τρίτη','Τετάρτη','Πέμπτη','Παρασκευή','Σάββατο'];
+const MERES_S=['Κυ','Δε','Τρ','Τε','Πε','Πα','Σα'];
+const MHNES=['Ιανουαρίου','Φεβρουαρίου','Μαρτίου','Απριλίου','Μαΐου','Ιουνίου','Ιουλίου','Αυγούστου','Σεπτεμβρίου','Οκτωβρίου','Νοεμβρίου','Δεκεμβρίου'];
+const fmtD=d=>d.getDate()+' '+MHNES[d.getMonth()]+' '+d.getFullYear();
+const fmtS=d=>pad(d.getDate())+'/'+pad(d.getMonth()+1)+'/'+d.getFullYear();
+const fromKey=k=>{const [y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d)};
+const FOOD={'':'','prin':'πριν το φαγητό','me':'με το φαγητό','meta':'μετά το φαγητό','nistis':'νηστικός','adiaforo':'ανεξάρτητα από φαγητό'};
+const FORMS=['δισκίο','κάψουλα','σταγόνες','σιρόπι','φακελάκι','ένεση','εισπνοές','αλοιφή / κρέμα','έμπλαστρο','άλλο'];
+const ZONES=[{n:'Πρωί',a:5,b:12,l:'05–12'},{n:'Μεσημέρι',a:12,b:17,l:'12–17'},{n:'Απόγευμα',a:17,b:21,l:'17–21'},{n:'Βράδυ',a:21,b:29,l:'21–05'}];
+const zoneOf=d=>{let h=d.getHours();if(h<5)h+=24;return ZONES.find(z=>h>=z.a&&h<z.b)};
+const SYMS=['ζάλη','πονοκέφαλος','κούραση','ταχυκαρδία','πόνος στο στήθος','θολή όραση','δύσπνοια'];
+
+function fix(d){d=d||{};d.profile=d.profile||{};d.bp=d.bp||[];d.meds=d.meds||[];d.doses=d.doses||{};d.appts=d.appts||[];d.settings=d.settings||{};d.notified=d.notified||{};if(d.settings.period==null)d.settings.period=30;if(d.settings.sound==null)d.settings.sound=true;return d}
+function load(){try{const x=JSON.parse(localStorage.getItem(KEY));if(x)return fix(x)}catch(e){}return fix({})}
+let D=load();
+function persist(){try{localStorage.setItem(KEY,JSON.stringify(D))}catch(e){toast('Αποτυχία αποθήκευσης στη συσκευή')}}
+function save(){persist();schedBackup()}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(e._t);e._t=setTimeout(()=>e.classList.remove('on'),2600)}
+
+/* ---------- Κατάταξη πίεσης ---------- */
+function bpClass(s,d){
+ if(s>=180||d>=110)return{t:'Πολύ υψηλή',c:'var(--red)',warn:'Πολύ υψηλή πίεση. Ξεκουραστείτε 5 λεπτά και ξαναμετρήστε. Αν παραμένει τόσο ψηλά ή έχετε πόνο στο στήθος, δύσπνοια, αδυναμία ή θολή όραση, καλέστε αμέσως το 166 ή τον γιατρό σας.'};
+ if(s<90||d<60)return{t:'Χαμηλή',c:'var(--blue)',warn:(s<80?'Πολύ χαμηλή πίεση. Αν έχετε ζάλη ή λιποθυμική τάση, ξαπλώστε και επικοινωνήστε με γιατρό.':'')};
+ if(s>=160||d>=100)return{t:'Υψηλή (2ου βαθμού)',c:'var(--red)'};
+ if(s>=140||d>=90)return{t:'Υψηλή (1ου βαθμού)',c:'var(--orange)'};
+ if(s>=135||d>=85)return{t:'Οριακά υψηλή (για μέτρηση σπιτιού)',c:'var(--yellow)'};
+ if(s>=120||d>=80)return{t:'Φυσιολογική',c:'var(--green)'};
+ return{t:'Άριστη',c:'var(--green)'};
+}
+function bpStats(list){
+ if(!list.length)return null;
+ const av=f=>{const v=list.filter(r=>r[f]);return v.length?Math.round(v.reduce((a,r)=>a+r[f],0)/v.length):null};
+ const sys=list.map(r=>r.sys);
+ return{n:list.length,sys:av('sys'),dia:av('dia'),pulse:av('pulse'),maxS:Math.max(...sys),minS:Math.min(...sys),
+  maxD:Math.max(...list.map(r=>r.dia)),minD:Math.min(...list.map(r=>r.dia)),high:list.filter(r=>r.sys>=135||r.dia>=85).length};
+}
+function bpInPeriod(){const p=+D.settings.period;const lim=p?Date.now()-p*864e5:0;return D.bp.filter(r=>+new Date(r.t)>=lim).sort((a,b)=>a.t<b.t?1:-1)}
+
+/* ---------- Πρόγραμμα φαρμάκων ---------- */
+function scheduledOn(m,date){
+ if(!m.active||m.prn)return false;
+ const k=dkey(date);
+ if(m.start&&k<m.start)return false;
+ if(m.until&&k>m.until)return false;
+ if(m.days&&m.days.length&&m.days.length<7)return m.days.includes(date.getDay());
+ return true;
+}
+function dueList(date){const o=[];D.meds.forEach(m=>{if(scheduledOn(m,date))(m.times||[]).forEach(t=>o.push({med:m,time:t}))});return o.sort((a,b)=>a.time.localeCompare(b.time))}
+const doseKey=(date,m,t)=>dkey(date)+'|'+m.id+'|'+t;
+function adherence(m,days){
+ let due=0,tk=0;const now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ for(let i=0;i<days;i++){const d=new Date(now);d.setDate(d.getDate()-i);if(!scheduledOn(m,d))continue;
+  (m.times||[]).forEach(t=>{const [h,mi]=t.split(':').map(Number);if(i===0&&h*60+mi>nm)return;due++;const r=D.doses[doseKey(d,m,t)];if(r&&r.s==='taken')tk++})}
+ return due?Math.round(tk/due*100):null;
+}
+function daysLeft(m){
+ if(m.stock===''||m.stock==null||m.prn)return null;
+ const per=(+m.perDose||1)*((m.times||[]).length||1)*((m.days&&m.days.length&&m.days.length<7)?m.days.length/7:1);
+ return per?Math.floor(+m.stock/per):null;
+}
+function medTitle(m){return esc(m.name)+(m.strength?' <span class="mut">'+esc(m.strength)+'</span>':'')}
+function freqText(m){
+ if(m.prn)return 'όταν χρειάζεται';
+ let s=(m.times||[]).join(', ');
+ if(m.days&&m.days.length&&m.days.length<7)s+=' · '+m.days.map(d=>MERES_S[d]).join(' ');
+ return s||'χωρίς ώρα';
+}
+function addHist(m,text){m.history=m.history||[];m.history.push({t:new Date().toISOString(),text})}
+
+/* ---------- Καρτέλες ---------- */
+let TAB='sim';
+function showTab(t){TAB=t;document.querySelectorAll('section.tab').forEach(s=>s.classList.toggle('on',s.id==='t-'+t));document.querySelectorAll('nav button').forEach(b=>b.classList.toggle('on',b.dataset.tab===t));render();scrollTo(0,0)}
+function render(){
+ const n=new Date();$('#hdate').textContent=MERES[n.getDay()]+', '+fmtD(n);
+ ({sim:rSim,pie:rPie,far:rFar,kar:rKar,per:rPer})[TAB]();
+ checkBanner();
+}
+
+/* ---- Σήμερα ---- */
+function rSim(){
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes(),list=dueList(now);
+ let h='';
+ if('Notification' in window&&Notification.permission==='default'&&D.meds.length)
+  h+=`<div class="card"><div class="row sp"><div class="grow"><b>Ειδοποιήσεις για τα χάπια</b><div class="mut">Επιτρέψτε στην εφαρμογή να σας ειδοποιεί την ώρα κάθε λήψης.</div></div><button class="pri" data-act="notifon">Ενεργοποίηση</button></div></div>`;
+ // Επόμενη λήψη
+ const pend=list.filter(i=>!D.doses[doseKey(now,i.med,i.time)]);
+ const next=pend.find(i=>{const [a,b]=i.time.split(':').map(Number);return a*60+b>=nm-30});
+ const taken=list.filter(i=>(D.doses[doseKey(now,i.med,i.time)]||{}).s==='taken').length;
+ h+=`<div class="card"><h2>Φάρμακα σήμερα</h2>`;
+ if(!D.meds.filter(m=>m.active).length){h+=`<p class="mut">Δεν έχετε καταχωρίσει φάρμακα ακόμη.</p><button class="pri wide" data-act="addmed">+ Προσθήκη φαρμάκου</button></div>`}
+ else{
+  h+=`<div class="row sp"><div><div class="big">${taken}/${list.length}</div><div class="mut">λήψεις ολοκληρώθηκαν</div></div>`+
+   (next?`<div style="text-align:right"><div class="mut">Επόμενη</div><b style="font-size:20px">${next.time}</b><div>${esc(next.med.name)}</div></div>`:(list.length?`<div class="st" style="color:var(--green)">✓ Όλα εντάξει για σήμερα</div>`:''))+`</div>`;
+  list.forEach(i=>{
+   const m=i.med,k=doseKey(now,m,i.time),r=D.doses[k];const [a,b]=i.time.split(':').map(Number);
+   const late=!r&&nm>a*60+b+30;
+   h+=`<div class="dose ${r?'done':''} ${late?'late':''}"><div class="t">${i.time}</div><div class="grow"><div><b>${medTitle(m)}</b></div>
+    <div class="mut">${esc(m.dose||'')}${m.food?' · '+FOOD[m.food]:''}</div>${m.purpose?`<div class="mut">Για: ${esc(m.purpose)}</div>`:''}
+    ${r?`<div class="st" style="color:${r.s==='taken'?'var(--green)':'var(--mut)'}">${r.s==='taken'?'✓ Ελήφθη στις '+r.at:'Παραλείφθηκε'} <button class="small" data-act="undo" data-k="${k}">Αναίρεση</button></div>`
+     :`${late?'<div class="st" style="color:var(--red)">Σε καθυστέρηση</div>':''}<div class="row" style="margin-top:6px"><button class="ok small" data-act="take" data-k="${k}">✓ Το πήρα</button><button class="small" data-act="skip" data-k="${k}">Παράλειψη</button></div>`}
+   </div></div>`});
+  if(!list.length)h+=`<p class="mut">Δεν υπάρχουν προγραμματισμένες λήψεις σήμερα.</p>`;
+  h+=`</div>`;
+ }
+ // Όταν χρειάζεται
+ const prn=D.meds.filter(m=>m.active&&m.prn);
+ if(prn.length){h+=`<div class="card"><h2>Όταν χρειάζεται</h2>`;
+  prn.forEach(m=>{const tk=Object.keys(D.doses).filter(k=>k.startsWith(dkey(now)+'|'+m.id+'|prn'));
+   h+=`<div class="dose"><div class="grow"><b>${medTitle(m)}</b><div class="mut">${esc(m.dose||'')}${m.purpose?' · για: '+esc(m.purpose):''}</div>${tk.length?`<div class="mut">Σήμερα: ${tk.map(k=>D.doses[k].at).join(', ')}</div>`:''}</div><button class="small ok" data-act="prn" data-id="${m.id}">Το πήρα τώρα</button></div>`});
+  h+=`</div>`}
+ // Πίεση
+ const last=D.bp.slice().sort((a,b)=>a.t<b.t?1:-1)[0];
+ h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>`;
+ if(last){const c=bpClass(last.sys,last.dia),d=new Date(last.t);
+  const tday=D.bp.filter(r=>dkey(new Date(r.t))===dkey(now));
+  h+=`<div class="row" style="margin-top:10px"><span class="pill" style="background:${c.c}"></span><span class="big">${last.sys}/${last.dia}</span>${last.pulse?`<span class="mut">♥ ${last.pulse}</span>`:''}</div>
+   <div class="mut">${c.t} · ${dkey(d)===dkey(now)?'σήμερα':fmtS(d)} ${hm(d)} (${zoneOf(d).n.toLowerCase()})</div>
+   <div class="mut">Μετρήσεις σήμερα: ${tday.length}</div>`}
+ else h+=`<p class="mut">Καμία μέτρηση ακόμη.</p>`;
+ h+=`</div>`;
+ // Απόθεμα
+ const low=D.meds.filter(m=>m.active&&daysLeft(m)!=null&&daysLeft(m)<=7);
+ if(low.length)h+=`<div class="card warn"><h2>Τελειώνουν σύντομα</h2>${low.map(m=>`<div>💊 <b>${esc(m.name)}</b> — ${m.stock} τεμ., περίπου ${daysLeft(m)} ${daysLeft(m)===1?'ημέρα':'ημέρες'}</div>`).join('')}<div class="mut" style="margin-top:6px">Κλείστε συνταγή ή αγοράστε έγκαιρα.</div></div>`;
+ // Ραντεβού
+ const up=D.appts.filter(a=>!a.done&&a.d>=dkey(now)&&a.d<=dkey(new Date(Date.now()+14*864e5))).sort((a,b)=>(a.d+a.h)<(b.d+b.h)?-1:1);
+ if(up.length)h+=`<div class="card"><h2>Ερχόμενα ραντεβού</h2>${up.map(a=>`<div style="margin-bottom:6px">📅 <b>${fmtS(fromKey(a.d))}${a.h?' '+a.h:''}</b> — ${esc(a.title)}${a.place?' <span class="mut">('+esc(a.place)+')</span>':''}</div>`).join('')}</div>`;
+ $('#t-sim').innerHTML=h;
+}
+
+/* ---- Πίεση ---- */
+function rPie(){
+ const list=bpInPeriod(),st=bpStats(list),P=+D.settings.period;
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Πίεση</h2><button class="pri" data-act="addbp">+ Νέα μέτρηση</button></div>
+ <div class="chips" style="margin-top:10px">${[[7,'7 ημέρες'],[30,'30 ημέρες'],[90,'3 μήνες'],[0,'Όλες']].map(([v,t])=>`<button class="chip ${P===v?'on':''}" data-act="period" data-v="${v}">${t}</button>`).join('')}</div></div>`;
+ if(!st){h+=`<div class="card"><p class="mut">Δεν υπάρχουν μετρήσεις σε αυτό το διάστημα.</p><p class="mut">Συμβουλή: μετράτε καθιστός, με την πλάτη ακουμπισμένη, μετά από 5 λεπτά ξεκούραση, χωρίς καφέ ή κάπνισμα 30 λεπτά πριν. Κάντε 2 μετρήσεις με 1 λεπτό διαφορά, πρωί και βράδυ.</p></div>`;$('#t-pie').innerHTML=h;return}
+ const c=bpClass(st.sys,st.dia);
+ h+=`<div class="card"><h2>Μέσος όρος</h2><div class="row"><span class="pill" style="background:${c.c}"></span><span class="big">${st.sys}/${st.dia}</span>${st.pulse?`<span class="mut">♥ ${st.pulse}</span>`:''}</div>
+ <div class="mut">${c.t} · ${st.n} μετρήσεις</div>
+ <div class="g2" style="margin-top:10px"><div><div class="mut">Μεγάλη</div><b>${st.minS} – ${st.maxS}</b></div><div><div class="mut">Μικρή</div><b>${st.minD} – ${st.maxD}</b></div></div>
+ <div class="mut" style="margin-top:6px">Πάνω από 135/85: ${st.high} από ${st.n} (${Math.round(st.high/st.n*100)}%)</div></div>`;
+ // Ανά ζώνη
+ h+=`<div class="card"><h2>Ανά ώρα της ημέρας</h2><table><tr><th>Ζώνη</th><th>Μετρ.</th><th>Μ.Ο.</th><th>Σφυγμοί</th></tr>`;
+ ZONES.forEach(z=>{const zl=list.filter(r=>zoneOf(new Date(r.t))===z),s=bpStats(zl);
+  h+=`<tr><td><b>${z.n}</b><div class="mut">${z.l}</div></td><td>${zl.length}</td><td>${s?`<span class="pill" style="background:${bpClass(s.sys,s.dia).c}"></span><span class="bpv">${s.sys}/${s.dia}</span>`:'—'}</td><td>${s&&s.pulse?s.pulse:'—'}</td></tr>`});
+ h+=`</table></div>`;
+ // Ανά ημέρα εβδομάδας
+ h+=`<div class="card"><h2>Ανά ημέρα της εβδομάδας</h2><table><tr><th>Ημέρα</th><th>Μετρ.</th><th>Μ.Ο.</th></tr>`;
+ [1,2,3,4,5,6,0].forEach(w=>{const wl=list.filter(r=>new Date(r.t).getDay()===w),s=bpStats(wl);
+  h+=`<tr><td>${MERES[w]}</td><td>${wl.length}</td><td>${s?`<span class="pill" style="background:${bpClass(s.sys,s.dia).c}"></span>${s.sys}/${s.dia}`:'—'}</td></tr>`});
+ h+=`</table></div>`;
+ h+=`<div class="card"><h2>Γράφημα</h2>${bpChart(list)}<div class="mut"><span class="pill" style="background:var(--red)"></span>μεγάλη <span class="pill" style="background:var(--blue);margin-left:10px"></span>μικρή · διακεκομμένες: όριο 135/85</div></div>`;
+ // Λίστα
+ h+=`<div class="card"><div class="row sp"><h2 style="margin:0">Μετρήσεις</h2><button class="small" data-act="printbp">🖨 Αναφορά για γιατρό</button></div>`;
+ let cur='';
+ list.forEach(r=>{const d=new Date(r.t),k=dkey(d);
+  if(k!==cur){cur=k;const dl=list.filter(x=>dkey(new Date(x.t))===k),s=bpStats(dl);h+=`<div class="list-day">${MERES[d.getDay()]} ${fmtS(d)}${dl.length>1?` · Μ.Ο. ${s.sys}/${s.dia}`:''}</div>`}
+  const c=bpClass(r.sys,r.dia);
+  h+=`<div class="dose"><div class="t" style="font-size:15px">${hm(d)}<div class="mut" style="font-weight:400;font-size:12px">${zoneOf(d).n}</div></div><div class="grow"><div><span class="pill" style="background:${c.c}"></span><span class="bpv">${r.sys}/${r.dia}</span>${r.pulse?` <span class="mut">♥ ${r.pulse}</span>`:''}</div><div class="mut">${c.t}${r.arm?' · '+esc(r.arm)+' χέρι':''}${r.pos?' · '+esc(r.pos):''}</div>${r.sym&&r.sym.length?`<div class="mut">Συμπτώματα: ${r.sym.map(esc).join(', ')}</div>`:''}${r.note?`<div class="mut">${esc(r.note)}</div>`:''}</div><button class="small" data-act="editbp" data-id="${r.id}">✎</button></div>`});
+ h+=`</div>`;
+ $('#t-pie').innerHTML=h;
+}
+function bpChart(list){
+ if(list.length<2)return '<p class="mut">Χρειάζονται τουλάχιστον 2 μετρήσεις.</p>';
+ const pts=list.slice().sort((a,b)=>a.t<b.t?-1:1),W=340,H=200,L=30,R=8,T=8,B=22;
+ const t0=+new Date(pts[0].t),t1=+new Date(pts[pts.length-1].t),span=Math.max(t1-t0,1);
+ const ymin=Math.floor(Math.min(50,...pts.map(r=>r.dia-10))/10)*10,ymax=Math.ceil(Math.max(170,...pts.map(r=>r.sys+10))/10)*10;
+ const x=t=>L+(t-t0)/span*(W-L-R),y=v=>T+(ymax-v)/(ymax-ymin)*(H-T-B);
+ let s=`<svg viewBox="0 0 ${W} ${H}" width="100%" role="img" aria-label="Γράφημα πίεσης">`;
+ for(let v=ymin;v<=ymax;v+=20)s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--line)"/><text x="${L-4}" y="${y(v)+3}" text-anchor="end">${v}</text>`;
+ [135,85].forEach(v=>s+=`<line x1="${L}" x2="${W-R}" y1="${y(v)}" y2="${y(v)}" stroke="var(--mut)" stroke-dasharray="4 4"/>`);
+ [['sys','var(--red)'],['dia','var(--blue)']].forEach(([f,c])=>{
+  s+=`<polyline fill="none" stroke="${c}" stroke-width="2" points="${pts.map(r=>x(+new Date(r.t)).toFixed(1)+','+y(r[f]).toFixed(1)).join(' ')}"/>`;
+  if(pts.length<=60)pts.forEach(r=>s+=`<circle cx="${x(+new Date(r.t)).toFixed(1)}" cy="${y(r[f]).toFixed(1)}" r="2.6" fill="${c}"/>`)});
+ const d0=new Date(t0),d1=new Date(t1);
+ s+=`<text x="${L}" y="${H-5}">${pad(d0.getDate())}/${pad(d0.getMonth()+1)}</text><text x="${W-R}" y="${H-5}" text-anchor="end">${pad(d1.getDate())}/${pad(d1.getMonth()+1)}</text></svg>`;
+ return s;
+}
+
+/* ---- Φάρμακα ---- */
+function rFar(){
+ const view=D.settings.medview||'active',act=D.meds.filter(m=>m.active),stp=D.meds.filter(m=>!m.active);
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Φάρμακα</h2><button class="pri" data-act="addmed">+ Προσθήκη</button></div>
+ <div class="chips" style="margin-top:10px"><button class="chip ${view==='active'?'on':''}" data-act="medview" data-v="active">Ενεργά (${act.length})</button><button class="chip ${view==='stopped'?'on':''}" data-act="medview" data-v="stopped">Διακοπή (${stp.length})</button><button class="chip ${view==='hist'?'on':''}" data-act="medview" data-v="hist">Ιστορικό</button></div></div>`;
+ if(view==='hist'){
+  const ev=[];D.meds.forEach(m=>(m.history||[]).forEach(e=>ev.push({m,e})));ev.sort((a,b)=>a.e.t<b.e.t?1:-1);
+  h+=`<div class="card"><h2>Όλες οι αλλαγές</h2>${ev.length?ev.map(({m,e})=>`<div class="dose"><div class="t" style="font-size:13px;min-width:78px">${fmtS(new Date(e.t))}</div><div class="grow"><b>${esc(m.name)}</b><div class="mut">${esc(e.text)}</div></div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}</div>`;
+  $('#t-far').innerHTML=h;return;
+ }
+ const list=view==='active'?act:stp;
+ if(!list.length)h+=`<div class="card"><p class="mut">${view==='active'?'Δεν υπάρχουν ενεργά φάρμακα.':'Δεν έχετε διακόψει κάποιο φάρμακο.'}</p></div>`;
+ list.sort((a,b)=>a.name.localeCompare(b.name,'el')).forEach(m=>{
+  const ad=m.active&&!m.prn?adherence(m,30):null,dl=m.active?daysLeft(m):null;
+  h+=`<div class="card"><div class="row sp"><div class="grow"><div style="font-size:18px"><b>${medTitle(m)}</b></div>${m.substance?`<div class="mut">Δραστική ουσία: ${esc(m.substance)}</div>`:''}</div>${m.form?`<span class="tag">${esc(m.form)}</span>`:''}</div>
+  ${m.purpose?`<div style="margin-top:6px"><b>Τι κάνει / για τι:</b> ${esc(m.purpose)}</div>`:''}
+  <div style="margin-top:6px">${m.dose?`<span class="tag">${esc(m.dose)}</span>`:''}${m.prn?'<span class="tag">όταν χρειάζεται</span>':(m.times||[]).map(t=>`<span class="tag">⏰ ${t}</span>`).join('')}${m.days&&m.days.length&&m.days.length<7?`<span class="tag">${m.days.map(d=>MERES_S[d]).join(' ')}</span>`:''}${m.food?`<span class="tag">${FOOD[m.food]}</span>`:''}</div>
+  <div class="mut" style="margin-top:6px">${m.doctor?'Γιατρός: '+esc(m.doctor)+' · ':''}${m.start?'Από '+fmtS(fromKey(m.start)):''}${m.until?' έως '+fmtS(fromKey(m.until)):''}${!m.active&&m.end?' · Διακοπή '+fmtS(fromKey(m.end)):''}</div>
+  ${!m.active&&m.endReason?`<div class="mut">Λόγος διακοπής: ${esc(m.endReason)}</div>`:''}
+  ${m.notes?`<div class="mut">Σημειώσεις: ${esc(m.notes)}</div>`:''}
+  ${dl!=null?`<div class="mut" style="${dl<=7?'color:var(--red);font-weight:600':''}">Απόθεμα: ${m.stock} τεμ. (≈ ${dl} ημέρες)</div>`:''}
+  ${ad!=null?`<div class="mut">Τήρηση 30 ημερών: <b>${ad}%</b></div>`:''}
+  <div class="row" style="margin-top:10px"><button class="small" data-act="editmed" data-id="${m.id}">✎ Επεξεργασία</button>${m.active?`<button class="small danger" data-act="stopmed" data-id="${m.id}">Διακοπή</button>`:`<button class="small" data-act="restartmed" data-id="${m.id}">Επανέναρξη</button>`}<button class="small" data-act="histmed" data-id="${m.id}">Ιστορικό</button></div></div>`});
+ $('#t-far').innerHTML=h;
+}
+
+/* ---- Κάρτα νοσοκομείου ---- */
+function lastBpInfo(){const l=D.bp.slice().sort((a,b)=>a.t<b.t?1:-1);if(!l.length)return null;const w=bpStats(l.filter(r=>+new Date(r.t)>=Date.now()-7*864e5));return{last:l[0],w}}
+function recentStopped(){const lim=dkey(new Date(Date.now()-90*864e5));return D.meds.filter(m=>!m.active&&m.end&&m.end>=lim)}
+function rKar(){
+ const p=D.profile,act=D.meds.filter(m=>m.active).sort((a,b)=>a.name.localeCompare(b.name,'el')),bi=lastBpInfo(),rs=recentStopped();
+ let h=`<div class="card"><div class="row sp"><h2 style="margin:0">Κάρτα για γιατρό / νοσοκομείο</h2></div><div class="row" style="margin-top:10px"><button class="small" data-act="bigtext">🔍 Μεγάλα γράμματα</button><button class="small" data-act="sharecard">📤 Αποστολή</button><button class="small" data-act="copycard">📋 Αντιγραφή</button><button class="small" data-act="printcard">🖨 Εκτύπωση</button></div></div>`;
+ h+=`<div class="card hcard ${D.settings.bigtext?'bigtxt':''}">`;
+ if(!p.name)h+=`<p class="mut">Συμπληρώστε τα στοιχεία σας για να είναι πλήρης η κάρτα.</p>`;
+ h+=`<div style="font-size:1.25em;font-weight:700">${esc(p.name||'—')}</div>
+ <div class="mut">${p.birth?'Γέννηση: '+fmtS(fromKey(p.birth)):''}${p.amka?' · ΑΜΚΑ: '+esc(p.amka):''}${p.blood?' · Ομάδα αίματος: <b>'+esc(p.blood)+'</b>':''}</div>
+ <div class="lbl">ΑΛΛΕΡΓΙΕΣ</div><div class="al">${esc(p.allergies||'Καμία γνωστή')}</div>
+ ${p.conditions?`<div class="lbl">ΠΑΘΗΣΕΙΣ / ΙΣΤΟΡΙΚΟ</div><div>${esc(p.conditions)}</div>`:''}
+ <div class="lbl">ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ (${act.length})</div>`;
+ h+=act.length?`<table><tr><th>Φάρμακο</th><th>Δόση</th><th>Πότε</th></tr>${act.map(m=>`<tr><td><b>${esc(m.name)}</b> ${esc(m.strength||'')}${m.purpose?`<div class="mut">${esc(m.purpose)}</div>`:''}</td><td>${esc(m.dose||'')}</td><td>${esc(freqText(m))}${m.food?`<div class="mut">${FOOD[m.food]}</div>`:''}</td></tr>`).join('')}</table>`:'<div>Κανένα</div>';
+ if(rs.length)h+=`<div class="lbl">ΔΙΑΚΟΠΗ ΤΟΥΣ ΤΕΛΕΥΤΑΙΟΥΣ 3 ΜΗΝΕΣ</div>${rs.map(m=>`<div>${esc(m.name)} ${esc(m.strength||'')} — ${fmtS(fromKey(m.end))}${m.endReason?' ('+esc(m.endReason)+')':''}</div>`).join('')}`;
+ if(bi)h+=`<div class="lbl">ΠΙΕΣΗ</div><div>Τελευταία: <b>${bi.last.sys}/${bi.last.dia}</b>${bi.last.pulse?' ♥ '+bi.last.pulse:''} (${fmtS(new Date(bi.last.t))} ${hm(new Date(bi.last.t))})${bi.w?` · Μ.Ο. 7 ημερών: <b>${bi.w.sys}/${bi.w.dia}</b>`:''}</div>`;
+ if(p.contact)h+=`<div class="lbl">ΕΠΑΦΗ ΕΚΤΑΚΤΗΣ ΑΝΑΓΚΗΣ</div><div>${esc(p.contact)}</div>`;
+ if(p.doctor)h+=`<div class="lbl">ΘΕΡΑΠΩΝ ΓΙΑΤΡΟΣ</div><div>${esc(p.doctor)}</div>`;
+ if(p.other)h+=`<div class="lbl">ΑΛΛΑ</div><div>${esc(p.other)}</div>`;
+ h+=`<div class="mut" style="margin-top:10px">Ενημέρωση: ${fmtS(new Date())}</div></div><button class="wide" data-act="profile">✎ Επεξεργασία στοιχείων</button>`;
+ $('#t-kar').innerHTML=h;
+}
+function cardText(){
+ const p=D.profile,act=D.meds.filter(m=>m.active).sort((a,b)=>a.name.localeCompare(b.name,'el')),bi=lastBpInfo(),rs=recentStopped(),L=[];
+ L.push('ΚΑΡΤΑ ΥΓΕΙΑΣ — '+(p.name||''));
+ if(p.birth)L.push('Γέννηση: '+fmtS(fromKey(p.birth)));if(p.amka)L.push('ΑΜΚΑ: '+p.amka);if(p.blood)L.push('Ομάδα αίματος: '+p.blood);
+ L.push('ΑΛΛΕΡΓΙΕΣ: '+(p.allergies||'Καμία γνωστή'));if(p.conditions)L.push('Παθήσεις: '+p.conditions);
+ L.push('','ΕΝΕΡΓΑ ΦΑΡΜΑΚΑ ('+fmtS(new Date())+'):');
+ act.forEach((m,i)=>L.push((i+1)+'. '+m.name+(m.strength?' '+m.strength:'')+(m.dose?' — '+m.dose:'')+' — '+freqText(m)+(m.food?' ('+FOOD[m.food]+')':'')+(m.purpose?' — για: '+m.purpose:'')));
+ if(!act.length)L.push('Κανένα');
+ if(rs.length){L.push('','Διακοπή τελευταίων 3 μηνών:');rs.forEach(m=>L.push('- '+m.name+(m.strength?' '+m.strength:'')+' ('+fmtS(fromKey(m.end))+(m.endReason?', '+m.endReason:'')+')'))}
+ if(bi)L.push('','Πίεση: τελευταία '+bi.last.sys+'/'+bi.last.dia+' ('+fmtS(new Date(bi.last.t))+')'+(bi.w?', Μ.Ο. 7 ημερών '+bi.w.sys+'/'+bi.w.dia:''));
+ if(p.contact)L.push('Επαφή έκτακτης ανάγκης: '+p.contact);if(p.doctor)L.push('Θεράπων γιατρός: '+p.doctor);if(p.other)L.push('Άλλα: '+p.other);
+ return L.join('\n');
+}
+
+/* ---- Περισσότερα ---- */
+function rPer(){
+ const perm='Notification' in window?Notification.permission:'none';
+ const permT={granted:'ενεργές',denied:'αποκλεισμένες από τις ρυθμίσεις του κινητού',default:'ανενεργές',none:'δεν υποστηρίζονται σε αυτή τη συσκευή'}[perm];
+ const ap=D.appts.slice().sort((a,b)=>(a.d+(a.h||''))<(b.d+(b.h||''))?-1:1),today=dkey(new Date());
+ const fut=ap.filter(a=>a.d>=today&&!a.done),past=ap.filter(a=>a.d<today||a.done).reverse();
+ const apRow=a=>`<div class="dose ${a.done?'done':''}"><div class="t" style="font-size:14px;min-width:84px">${fmtS(fromKey(a.d))}<div class="mut" style="font-weight:400">${a.h||''}</div></div><div class="grow"><b>${esc(a.title)}</b>${a.place?`<div class="mut">${esc(a.place)}</div>`:''}${a.note?`<div class="mut">${esc(a.note)}</div>`:''}</div><button class="small" data-act="editappt" data-id="${a.id}">✎</button></div>`;
+ let h=`<div class="card"><h2>Προσωπικά στοιχεία</h2><div class="mut">Όνομα, αλλεργίες, παθήσεις, ομάδα αίματος, επαφή έκτακτης ανάγκης.</div><button class="wide" style="margin-top:8px" data-act="profile">✎ Επεξεργασία</button></div>
+ <div class="card"><div class="row sp"><h2 style="margin:0">Ραντεβού & εξετάσεις</h2><button class="pri small" data-act="addappt">+ Νέο</button></div>
+ ${fut.length?fut.map(apRow).join(''):'<p class="mut">Κανένα ερχόμενο ραντεβού.</p>'}
+ ${past.length?`<h3>Προηγούμενα</h3>${past.slice(0,20).map(apRow).join('')}`:''}</div>
+ <div class="card"><h2>Υπενθυμίσεις</h2>
+ <div>Ειδοποιήσεις εφαρμογής: <b>${permT}</b></div>
+ ${perm==='default'?'<button class="pri wide" style="margin-top:8px" data-act="notifon">Ενεργοποίηση ειδοποιήσεων</button>':''}
+ <label class="ck" style="margin-top:10px"><input type="checkbox" data-act="sound" ${D.settings.sound?'checked':''}> Ήχος όταν είναι ώρα για χάπι</label>
+ <button class="small" data-act="testnotif">Δοκιμαστική ειδοποίηση</button>
+ <p class="mut">Οι ειδοποιήσεις της εφαρμογής βγαίνουν όταν αυτή είναι ανοιχτή ή πρόσφατα ανοιγμένη. Για υπενθύμιση που χτυπάει σίγουρα, ακόμη κι όταν η εφαρμογή είναι κλειστή, περάστε τις ώρες στο ημερολόγιο του κινητού:</p>
+ <button class="wide" data-act="ics">📅 Προσθήκη στο ημερολόγιο του κινητού</button>
+ <p class="mut">Αν αλλάξετε ώρες ή φάρμακα, διαγράψτε τα παλιά συμβάντα από το ημερολόγιο και ξαναπατήστε το κουμπί.</p></div>
+ <div class="card"><h2>Αντίγραφα ασφαλείας</h2><div class="mut" id="bkinfo">…</div>
+ <div class="row" style="margin-top:8px"><button class="pri" data-act="backup">Αντίγραφο τώρα</button><button data-act="restorelist">Επαναφορά</button><button class="small" data-act="clearfolder">✕ Αλλαγή φακέλου</button></div></div>
+ <div class="card"><h2>Εγκατάσταση στο κινητό</h2><div class="mut">Άντροιντ (Χρώμιο): μενού ⋮ → «Προσθήκη στην αρχική οθόνη» ή «Εγκατάσταση εφαρμογής».<br>Άιφον (Σαφάρι): κουμπί κοινοποίησης → «Προσθήκη στην οθόνη Αφετηρίας».</div>${installEvt?'<button class="pri wide" style="margin-top:8px" data-act="install">Εγκατάσταση</button>':''}</div>
+ <div class="card"><h2>Σημαντικό</h2><div class="mut">Τα δεδομένα μένουν μόνο στο κινητό σας και στον φάκελο αντιγράφων — δεν στέλνονται πουθενά. Η εφαρμογή βοηθά στην καταγραφή και δεν αντικαθιστά τον γιατρό σας. Μην αλλάζετε ή διακόπτετε φάρμακα χωρίς οδηγία γιατρού.</div>
+ <button class="small danger" style="margin-top:10px" data-act="wipe">Διαγραφή όλων των δεδομένων</button></div>`;
+ $('#t-per').innerHTML=h;bkInfo();
+}
+
+/* ---------- Φόρμες ---------- */
+function openDlg(html,onOk){
+ const d=$('#dlg');d.innerHTML='<form id="dform" novalidate>'+html+'</form>';
+ const f=$('#dform');
+ f.onsubmit=e=>{e.preventDefault();if(!f.reportValidity())return;if(onOk(new FormData(f),f)!==false)d.close()};
+ d.showModal();
+}
+const btns=(extra)=>`<div class="acts">${extra||''}<button type="button" data-act="close">Άκυρο</button><button class="pri" type="submit">Αποθήκευση</button></div>`;
+
+function bpForm(r){
+ r=r||{};const t=r.t?new Date(r.t):new Date();
+ openDlg(`<h2>${r.id?'Επεξεργασία μέτρησης':'Νέα μέτρηση πίεσης'}</h2>
+ <div class="g3"><label>Μεγάλη<input name="sys" type="number" inputmode="numeric" min="50" max="280" required value="${r.sys||''}" autofocus></label><label>Μικρή<input name="dia" type="number" inputmode="numeric" min="30" max="200" required value="${r.dia||''}"></label><label>Σφυγμοί<input name="pulse" type="number" inputmode="numeric" min="25" max="250" value="${r.pulse||''}"></label></div>
+ <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${dkey(t)}"></label><label>Ώρα<input type="time" name="h" required value="${hm(t)}"></label></div>
+ <div class="g2"><label>Χέρι<select name="arm">${['','αριστερό','δεξί'].map(v=>`<option ${r.arm===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label><label>Θέση<select name="pos">${['','καθιστός','ξαπλωμένος','όρθιος'].map(v=>`<option ${r.pos===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label></div>
+ <fieldset><legend>Συμπτώματα</legend>${SYMS.map(s=>`<label class="ck"><input type="checkbox" name="sym" value="${s}" ${(r.sym||[]).includes(s)?'checked':''}>${s}</label>`).join('')}</fieldset>
+ <label>Σημείωση<textarea name="note" placeholder="π.χ. πριν το πρωινό χάπι, μετά από περπάτημα">${esc(r.note||'')}</textarea></label>
+ ${btns(r.id?`<button type="button" class="danger" data-act="delbp" data-id="${r.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{
+  const sys=+fd.get('sys'),dia=+fd.get('dia');
+  if(dia>=sys){alert('Η μικρή πίεση πρέπει να είναι μικρότερη από τη μεγάλη.');return false}
+  const [y,mo,da]=fd.get('d').split('-').map(Number),[hh,mi]=fd.get('h').split(':').map(Number);
+  const o={id:r.id||uid(),t:new Date(y,mo-1,da,hh,mi).toISOString(),sys,dia,pulse:+fd.get('pulse')||null,arm:fd.get('arm'),pos:fd.get('pos'),sym:fd.getAll('sym'),note:fd.get('note').trim()};
+  const i=D.bp.findIndex(x=>x.id===o.id);if(i>=0)D.bp[i]=o;else D.bp.push(o);
+  save();render();const c=bpClass(sys,dia);
+  if(c.warn)setTimeout(()=>alert(c.warn),200);else toast('Αποθηκεύτηκε · '+c.t);
+ });
+}
+
+function timeRow(v){return `<div class="row"><input type="time" name="time" value="${v||''}"><button type="button" class="small" data-act="deltime">✕</button></div>`}
+function medForm(m){
+ const n=!m;m=m||{times:['08:00'],active:true,days:[]};
+ const alld=!m.days||!m.days.length||m.days.length===7;
+ openDlg(`<h2>${n?'Νέο φάρμακο':'Επεξεργασία φαρμάκου'}</h2>
+ <label>Όνομα φαρμάκου *<input name="name" required value="${esc(m.name||'')}" placeholder="όπως γράφει το κουτί"></label>
+ <div class="g2"><label>Περιεκτικότητα<input name="strength" value="${esc(m.strength||'')}" placeholder="π.χ. 5 mg"></label><label>Μορφή<select name="form"><option value="">—</option>${FORMS.map(f=>`<option ${m.form===f?'selected':''}>${f}</option>`).join('')}</select></label></div>
+ <label>Δραστική ουσία<input name="substance" value="${esc(m.substance||'')}"></label>
+ <label>Τι κάνει / για ποιο λόγο το παίρνω<textarea name="purpose" placeholder="π.χ. για την πίεση, αραιώνει το αίμα">${esc(m.purpose||'')}</textarea></label>
+ <div class="g2"><label>Δόση ανά λήψη<input name="dose" value="${esc(m.dose||'')}" placeholder="π.χ. 1 δισκίο"></label><label>Σχέση με φαγητό<select name="food">${Object.keys(FOOD).map(k=>`<option value="${k}" ${m.food===k?'selected':''}>${FOOD[k]||'—'}</option>`).join('')}</select></label></div>
+ <label class="ck"><input type="checkbox" name="prn" ${m.prn?'checked':''} data-act="prntoggle"> Μόνο όταν χρειάζεται (χωρίς σταθερή ώρα)</label>
+ <div id="schedBox" style="${m.prn?'display:none':''}">
+  <fieldset><legend>Ώρες λήψης</legend><div class="times" id="times">${(m.times&&m.times.length?m.times:['']).map(timeRow).join('')}</div><button type="button" class="small" data-act="addtime">+ Άλλη ώρα</button></fieldset>
+  <fieldset><legend>Ημέρες</legend><label class="ck"><input type="checkbox" name="alldays" ${alld?'checked':''} data-act="alldays"> Κάθε μέρα</label><div id="daysBox" style="${alld?'display:none':''}">${[1,2,3,4,5,6,0].map(d=>`<label class="ck"><input type="checkbox" name="day" value="${d}" ${!alld&&m.days.includes(d)?'checked':''}>${MERES_S[d]}</label>`).join('')}</div></fieldset>
+ </div>
+ <div class="g2"><label>Έναρξη<input type="date" name="start" value="${m.start||dkey(new Date())}"></label><label>Λήξη (αν είναι σχήμα π.χ. 7 ημερών)<input type="date" name="until" value="${m.until||''}"></label></div>
+ <label>Γιατρός που το έγραψε<input name="doctor" value="${esc(m.doctor||'')}"></label>
+ <div class="g2"><label>Απόθεμα (τεμάχια)<input type="number" inputmode="numeric" name="stock" min="0" value="${m.stock??''}"></label><label>Τεμάχια ανά λήψη<input type="number" inputmode="decimal" step="0.25" name="perDose" min="0" value="${m.perDose||1}"></label></div>
+ <label>Σημειώσεις / παρενέργειες<textarea name="notes">${esc(m.notes||'')}</textarea></label>
+ ${btns(!n?`<button type="button" class="danger" data-act="delmed" data-id="${m.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{
+  const prn=!!fd.get('prn');
+  const times=[...new Set(fd.getAll('time').filter(Boolean))].sort();
+  if(!prn&&!times.length){alert('Βάλτε τουλάχιστον μία ώρα λήψης ή επιλέξτε «όταν χρειάζεται».');return false}
+  const days=fd.get('alldays')?[]:fd.getAll('day').map(Number);
+  if(!prn&&!fd.get('alldays')&&!days.length){alert('Επιλέξτε ημέρες ή «Κάθε μέρα».');return false}
+  const o=Object.assign({},m,{id:m.id||uid(),name:fd.get('name').trim(),strength:fd.get('strength').trim(),form:fd.get('form'),substance:fd.get('substance').trim(),purpose:fd.get('purpose').trim(),dose:fd.get('dose').trim(),food:fd.get('food'),prn,times:prn?[]:times,days,start:fd.get('start'),until:fd.get('until'),doctor:fd.get('doctor').trim(),stock:fd.get('stock')===''?'':+fd.get('stock'),perDose:+fd.get('perDose')||1,notes:fd.get('notes').trim()});
+  if(n){o.active=true;o.history=[];addHist(o,'Έναρξη: '+[o.strength,o.dose,freqText(o)].filter(Boolean).join(' · '));D.meds.push(o)}
+  else{
+   const ch=[];
+   if(m.name!==o.name)ch.push('Όνομα: '+m.name+' → '+o.name);
+   if((m.strength||'')!==o.strength)ch.push('Περιεκτικότητα: '+(m.strength||'—')+' → '+(o.strength||'—'));
+   if((m.dose||'')!==o.dose)ch.push('Δόση: '+(m.dose||'—')+' → '+(o.dose||'—'));
+   if(freqText(m)!==freqText(o))ch.push('Πρόγραμμα: '+freqText(m)+' → '+freqText(o));
+   if(ch.length)addHist(o,'Αλλαγή · '+ch.join(' · '));
+   D.meds[D.meds.findIndex(x=>x.id===m.id)]=o;
+  }
+  save();render();toast('Αποθηκεύτηκε');
+ });
+}
+function stopForm(m){
+ openDlg(`<h2>Διακοπή: ${esc(m.name)}</h2><label>Ημερομηνία διακοπής<input type="date" name="end" required value="${dkey(new Date())}"></label><label>Λόγος<input name="reason" placeholder="π.χ. οδηγία γιατρού, παρενέργεια, τέλος θεραπείας"></label><p class="mut">Το φάρμακο θα μετακινηθεί στη λίστα «Διακοπή» και θα κρατηθεί στο ιστορικό.</p>${btns()}`,
+ fd=>{m.active=false;m.end=fd.get('end');m.endReason=fd.get('reason').trim();addHist(m,'Διακοπή'+(m.endReason?': '+m.endReason:''));save();render();toast('Το φάρμακο διακόπηκε')});
+}
+function histDlg(m){
+ const hs=(m.history||[]).slice().reverse();
+ openDlg(`<h2>Ιστορικό: ${esc(m.name)}</h2>${hs.length?hs.map(e=>`<div class="dose"><div class="t" style="font-size:13px;min-width:82px">${fmtS(new Date(e.t))}</div><div class="grow">${esc(e.text)}</div></div>`).join(''):'<p class="mut">Καμία καταχώριση.</p>'}
+ ${!m.prn?`<p class="mut">Τήρηση: 7 ημέρες ${adherence(m,7)??'—'}% · 30 ημέρες ${adherence(m,30)??'—'}%</p>`:''}<div class="acts"><button type="button" class="pri" data-act="close">Κλείσιμο</button></div>`,()=>{});
+}
+function profileForm(){
+ const p=D.profile;
+ openDlg(`<h2>Προσωπικά στοιχεία</h2>
+ <label>Ονοματεπώνυμο<input name="name" value="${esc(p.name||'')}"></label>
+ <div class="g2"><label>Ημερομηνία γέννησης<input type="date" name="birth" value="${p.birth||''}"></label><label>Ομάδα αίματος<select name="blood">${['','Α+','Α−','Β+','Β−','ΑΒ+','ΑΒ−','Ο+','Ο−'].map(v=>`<option ${p.blood===v?'selected':''} value="${v}">${v||'—'}</option>`).join('')}</select></label></div>
+ <label>ΑΜΚΑ<input name="amka" inputmode="numeric" value="${esc(p.amka||'')}"></label>
+ <label>Αλλεργίες (φάρμακα, τροφές κ.λπ.)<textarea name="allergies" placeholder="π.χ. πενικιλίνη">${esc(p.allergies||'')}</textarea></label>
+ <label>Παθήσεις / επεμβάσεις<textarea name="conditions">${esc(p.conditions||'')}</textarea></label>
+ <label>Επαφή έκτακτης ανάγκης<input name="contact" value="${esc(p.contact||'')}" placeholder="όνομα και τηλέφωνο"></label>
+ <label>Θεράπων γιατρός<input name="doctor" value="${esc(p.doctor||'')}" placeholder="όνομα, ειδικότητα, τηλέφωνο"></label>
+ <label>Άλλα (βηματοδότης, εμφυτεύματα, κ.λπ.)<textarea name="other">${esc(p.other||'')}</textarea></label>${btns()}`,
+ fd=>{['name','birth','blood','amka','allergies','conditions','contact','doctor','other'].forEach(k=>p[k]=(fd.get(k)||'').trim());save();render();toast('Αποθηκεύτηκε')});
+}
+function apptForm(a){
+ const n=!a;a=a||{};
+ openDlg(`<h2>${n?'Νέο ραντεβού / εξέταση':'Επεξεργασία'}</h2>
+ <label>Τι<input name="title" required value="${esc(a.title||'')}" placeholder="π.χ. Καρδιολόγος, αιματολογικές"></label>
+ <div class="g2"><label>Ημερομηνία<input type="date" name="d" required value="${a.d||dkey(new Date())}"></label><label>Ώρα<input type="time" name="h" value="${a.h||''}"></label></div>
+ <label>Πού<input name="place" value="${esc(a.place||'')}"></label>
+ <label>Σημειώσεις / αποτελέσματα<textarea name="note" placeholder="π.χ. νηστεία 12 ωρών, να πάρω τις εξετάσεις">${esc(a.note||'')}</textarea></label>
+ ${!n?`<label class="ck"><input type="checkbox" name="done" ${a.done?'checked':''}> Ολοκληρώθηκε</label>`:''}
+ ${btns(!n?`<button type="button" class="danger" data-act="delappt" data-id="${a.id}" style="margin-right:auto">Διαγραφή</button>`:'')}`,
+ fd=>{const o={id:a.id||uid(),title:fd.get('title').trim(),d:fd.get('d'),h:fd.get('h'),place:fd.get('place').trim(),note:fd.get('note').trim(),done:!!fd.get('done')};
+  const i=D.appts.findIndex(x=>x.id===o.id);if(i>=0)D.appts[i]=o;else D.appts.push(o);save();render();toast('Αποθηκεύτηκε')});
+}
+
+/* ---------- Λήψεις ---------- */
+function markDose(k,s){
+ const [,id]=k.split('|'),m=D.meds.find(x=>x.id===id);
+ D.doses[k]={s,at:hm(new Date())};
+ if(s==='taken'&&m&&m.stock!==''&&m.stock!=null){m.stock=Math.max(0,+m.stock-(+m.perDose||1))}
+ save();render();toast(s==='taken'?'✓ Καταγράφηκε':'Καταγράφηκε ως παράλειψη');
+}
+function undoDose(k){
+ const r=D.doses[k],[,id]=k.split('|'),m=D.meds.find(x=>x.id===id);
+ if(r&&r.s==='taken'&&m&&m.stock!==''&&m.stock!=null)m.stock=+m.stock+(+m.perDose||1);
+ delete D.doses[k];save();render();
+}
+
+/* ---------- Ειδοποιήσεις ---------- */
+let swReg=null;
+async function notif(title,body,tag,actions){
+ if(!('Notification' in window)||Notification.permission!=='granted')return false;
+ try{const o={body,tag,icon:'icon-192.png',badge:'icon-192.png',requireInteraction:true,renotify:true,vibrate:[300,150,300],data:{tag}};
+  if(actions)o.actions=actions;
+  if(swReg)await swReg.showNotification(title,o);else new Notification(title,o);return true}catch(e){try{new Notification(title,{body,tag});return true}catch(_){return false}}
+}
+function beep(){if(!D.settings.sound)return;try{const c=new(window.AudioContext||window.webkitAudioContext)();[0,.35,.7].forEach(t=>{const o=c.createOscillator(),g=c.createGain();o.frequency.value=880;g.gain.setValueAtTime(.001,c.currentTime+t);g.gain.exponentialRampToValueAtTime(.3,c.currentTime+t+.02);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+t+.28);o.connect(g).connect(c.destination);o.start(c.currentTime+t);o.stop(c.currentTime+t+.3)})}catch(e){}}
+function checkReminders(){
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes();let ch=false;
+ dueList(now).forEach(i=>{const [a,b]=i.time.split(':').map(Number),t=a*60+b,k=doseKey(now,i.med,i.time);
+  if(nm>=t&&nm-t<=180&&!D.doses[k]&&!D.notified[k]){D.notified[k]=1;ch=true;
+   notif('💊 Ώρα για '+i.med.name,[i.med.strength,i.med.dose,FOOD[i.med.food]].filter(Boolean).join(' · ')+' ('+i.time+')',k,[{action:'take',title:'✓ Το πήρα'}]);beep()}});
+ const td=dkey(now);
+ D.appts.filter(a=>!a.done&&a.d===td).forEach(a=>{const k='appt|'+a.id;if(!D.notified[k]&&now.getHours()>=7){D.notified[k]=1;ch=true;notif('📅 Σήμερα: '+a.title,[a.h,a.place].filter(Boolean).join(' · '),k)}});
+ // καθαρισμός παλιών
+ const lim=dkey(new Date(Date.now()-3*864e5));Object.keys(D.notified).forEach(k=>{if(/^\d{4}-/.test(k)&&k.slice(0,10)<lim){delete D.notified[k];ch=true}});
+ if(ch)persist();
+ checkBanner();
+}
+function checkBanner(){
+ const now=new Date(),nm=now.getHours()*60+now.getMinutes();
+ const late=dueList(now).filter(i=>{const [a,b]=i.time.split(':').map(Number);return nm>=a*60+b&&!D.doses[doseKey(now,i.med,i.time)]});
+ const bn=$('#banner');
+ if(late.length&&TAB!=='sim'){bn.style.display='block';bn.textContent='💊 Εκκρεμεί: '+late.map(i=>i.med.name+' ('+i.time+')').join(', ')+' — πατήστε για «Σήμερα»';bn.onclick=()=>showTab('sim')}
+ else bn.style.display='none';
+}
+
+/* ---------- Ημερολόγιο κινητού ---------- */
+function icsEsc(s){return String(s||'').replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n')}
+function makeIcs(){
+ const meds=D.meds.filter(m=>m.active&&!m.prn&&(m.times||[]).length);
+ if(!meds.length){alert('Δεν υπάρχουν ενεργά φάρμακα με ώρες.');return}
+ const now=new Date(),st=now.getUTCFullYear()+pad(now.getUTCMonth()+1)+pad(now.getUTCDate())+'T'+pad(now.getUTCHours())+pad(now.getUTCMinutes())+'00Z';
+ const BD=['SU','MO','TU','WE','TH','FR','SA'];
+ const L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//fakelos-ygeias//el','CALSCALE:GREGORIAN','X-WR-CALNAME:Φάρμακα'];
+ meds.forEach(m=>{
+  const sd=m.start&&m.start>dkey(now)?fromKey(m.start):now;
+  m.times.forEach(t=>{const [h,mi]=t.split(':');
+   let rr='RRULE:FREQ='+(m.days&&m.days.length&&m.days.length<7?'WEEKLY;BYDAY='+m.days.map(d=>BD[d]).join(','):'DAILY');
+   if(m.until)rr+=';UNTIL='+m.until.replace(/-/g,'')+'T235959';
+   const txt='💊 '+m.name+(m.strength?' '+m.strength:'')+(m.dose?' — '+m.dose:'');
+   L.push('BEGIN:VEVENT','UID:'+m.id+'-'+t.replace(':','')+'@fakelos-ygeias','DTSTAMP:'+st,
+    'DTSTART:'+sd.getFullYear()+pad(sd.getMonth()+1)+pad(sd.getDate())+'T'+h+mi+'00','DURATION:PT5M',rr,
+    'SUMMARY:'+icsEsc(txt),'DESCRIPTION:'+icsEsc([m.purpose?'Για: '+m.purpose:'',FOOD[m.food]].filter(Boolean).join('\n')),
+    'BEGIN:VALARM','ACTION:DISPLAY','DESCRIPTION:'+icsEsc(txt),'TRIGGER:PT0M','END:VALARM','END:VEVENT')})});
+ L.push('END:VCALENDAR');
+ download('ypenthymiseis-farmakon.ics',L.join('\r\n'),'text/calendar');
+ toast('Ανοίξτε το αρχείο για να μπει στο ημερολόγιο');
+}
+function download(name,text,type){const b=new Blob([text],{type}),a=document.createElement('a');a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove()},1500)}
+
+/* ---------- Εκτύπωση ---------- */
+function doPrint(html){const p=$('#print');p.innerHTML=html;document.body.classList.add('printing');setTimeout(()=>{window.print()},50)}
+window.addEventListener('afterprint',()=>document.body.classList.remove('printing'));
+function printBp(){
+ const list=bpInPeriod(),st=bpStats(list),P=+D.settings.period,p=D.profile;
+ if(!st){alert('Δεν υπάρχουν μετρήσεις.');return}
+ let h=`<h2>Καταγραφή αρτηριακής πίεσης</h2><div>${esc(p.name||'')}${p.birth?' · Γέννηση: '+fmtS(fromKey(p.birth)):''}</div><div>Διάστημα: ${P?'τελευταίες '+P+' ημέρες':'όλες οι μετρήσεις'} · Εκτύπωση: ${fmtS(new Date())}</div>
+ <h3>Σύνοψη</h3><div>Μέσος όρος: <b>${st.sys}/${st.dia}</b>${st.pulse?', σφυγμοί '+st.pulse:''} · ${st.n} μετρήσεις · πάνω από 135/85: ${st.high}</div>
+ <table><tr><th>Ζώνη</th><th>Μετρήσεις</th><th>Μέσος όρος</th><th>Σφυγμοί</th></tr>${ZONES.map(z=>{const zl=list.filter(r=>zoneOf(new Date(r.t))===z),s=bpStats(zl);return `<tr><td>${z.n} (${z.l})</td><td>${zl.length}</td><td>${s?s.sys+'/'+s.dia:'—'}</td><td>${s&&s.pulse?s.pulse:'—'}</td></tr>`}).join('')}</table>
+ <h3>Ενεργά φάρμακα</h3><div>${D.meds.filter(m=>m.active).map(m=>esc(m.name+' '+(m.strength||'')+' — '+(m.dose||'')+' — '+freqText(m))).join('<br>')||'—'}</div>
+ <h3>Μετρήσεις</h3><table><tr><th>Ημερομηνία</th><th>Ώρα</th><th>Πίεση</th><th>Σφυγμοί</th><th>Σημειώσεις</th></tr>${list.map(r=>{const d=new Date(r.t);return `<tr><td>${fmtS(d)}</td><td>${hm(d)}</td><td><b>${r.sys}/${r.dia}</b></td><td>${r.pulse||''}</td><td>${esc([(r.sym||[]).join(', '),r.note].filter(Boolean).join(' · '))}</td></tr>`}).join('')}</table>`;
+ doPrint(h);
+}
+
+/* ---------- Αντίγραφα ασφαλείας (κοινός φάκελος) ---------- */
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('shared-backups',1);r.onupgradeneeded=()=>{if(!r.result.objectStoreNames.contains('handles'))r.result.createObjectStore('handles')};r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)})}
+async function idbDo(mode,fn){const db=await idb();return new Promise((res,rej)=>{const tx=db.transaction('handles',mode),rq=fn(tx.objectStore('handles'));rq.onsuccess=()=>res(rq.result);rq.onerror=()=>rej(rq.error)})}
+const getRoot=()=>idbDo('readonly',s=>s.get('root')).catch(()=>null);
+const setRoot=h=>idbDo('readwrite',s=>s.put(h,'root'));
+const delRoot=()=>idbDo('readwrite',s=>s.delete('root'));
+async function pickRoot(){const h=await window.showDirectoryPicker({id:'backups',mode:'readwrite',startIn:'downloads'});await setRoot(h);return h}
+async function perm(h,ask){const o={mode:'readwrite'};try{if(await h.queryPermission(o)==='granted')return true;if(ask)return(await h.requestPermission(o))==='granted'}catch(e){}return false}
+const bkName=()=>'fakelos-ygeias-'+dkey(new Date())+'.json';
+async function backupNow(ask){
+ const data=JSON.stringify(D);
+ let root=await getRoot();
+ if(!root&&ask&&window.showDirectoryPicker){try{root=await pickRoot()}catch(e){root=null}}
+ if(root&&await perm(root,ask)){
+  try{const dir=await root.getDirectoryHandle(SUB,{create:true}),fh=await dir.getFileHandle(bkName(),{create:true}),w=await fh.createWritable();await w.write(data);await w.close();
+   D.settings.lastBackup=new Date().toISOString();persist();return 'folder'}catch(e){if(!ask)return null}
+ }
+ if(ask){download(bkName(),data,'application/json');D.settings.lastBackup=new Date().toISOString();persist();return 'download'}
+ return null;
+}
+let bkT=null;function schedBackup(){clearTimeout(bkT);bkT=setTimeout(()=>backupNow(false),4000)}
+async function bkInfo(){
+ const e=$('#bkinfo');if(!e)return;const root=await getRoot();
+ const lb=D.settings.lastBackup?new Date(D.settings.lastBackup):null;
+ e.innerHTML=(root?`Φάκελος: <b>${esc(root.name)}/${SUB}</b>`:(window.showDirectoryPicker?'Δεν έχει επιλεγεί φάκελος — με το «Αντίγραφο τώρα» διαλέγετε τον κοινό φάκελο αντιγράφων.':'Η συσκευή δεν υποστηρίζει φάκελο· το αντίγραφο κατεβαίνει ως αρχείο.'))+(lb?`<br>Τελευταίο αντίγραφο: ${fmtS(lb)} ${hm(lb)}`:'<br>Δεν έχει γίνει αντίγραφο ακόμη.')+(root?'<br>Όταν υπάρχει άδεια, γίνεται αυτόματα μετά από κάθε αλλαγή.':'');
+}
+async function restoreList(){
+ const root=await getRoot();
+ if(!root||!(await perm(root,true))){$('#fileIn').click();return}
+ let files=[];
+ try{const dir=await root.getDirectoryHandle(SUB,{create:true});for await(const [n,h] of dir.entries()){if(h.kind==='file'&&n.endsWith('.json'))files.push({n,h})}}catch(e){}
+ files.sort((a,b)=>a.n<b.n?1:-1);files=files.slice(0,10);
+ openDlg(`<h2>Επαναφορά από αντίγραφο</h2>${files.length?files.map((f,i)=>`<button type="button" class="wide" style="margin-bottom:6px;text-align:left" data-act="restorefile" data-i="${i}">${esc(f.n)} ${i===0?'<span class="tag">νεότερο</span>':''}</button>`).join(''):'<p class="mut">Δεν βρέθηκαν αντίγραφα στον φάκελο.</p>'}
+ <button type="button" class="wide" data-act="restorepick">Επιλογή αρχείου από αλλού…</button><div class="acts"><button type="button" data-act="close">Άκυρο</button></div>`,()=>{});
+ window._rfiles=files;
+}
+function applyRestore(text){
+ try{const x=JSON.parse(text);if(!x||typeof x!=='object'||!('meds' in x||'bp' in x))throw 0;
+  if(!confirm('Τα τωρινά δεδομένα θα αντικατασταθούν από το αντίγραφο. Συνέχεια;'))return;
+  D=fix(x);persist();$('#dlg').open&&$('#dlg').close();render();toast('Έγινε επαναφορά')}catch(e){alert('Το αρχείο δεν είναι έγκυρο αντίγραφο αυτής της εφαρμογής.')}
+}
+
+/* ---------- Χειρισμός κλικ ---------- */
+let installEvt=null;
+addEventListener('beforeinstallprompt',e=>{e.preventDefault();installEvt=e;if(TAB==='per')render()});
+document.addEventListener('click',async e=>{
+ const nb=e.target.closest('nav button');if(nb){showTab(nb.dataset.tab);return}
+ const b=e.target.closest('[data-act]');if(!b)return;
+ const a=b.dataset.act,id=b.dataset.id,med=id&&D.meds.find(m=>m.id===id);
+ switch(a){
+  case 'close':$('#dlg').close();break;
+  case 'addbp':bpForm();break;
+  case 'editbp':bpForm(D.bp.find(r=>r.id===id));break;
+  case 'delbp':if(confirm('Διαγραφή της μέτρησης;')){D.bp=D.bp.filter(r=>r.id!==id);save();$('#dlg').close();render()}break;
+  case 'period':D.settings.period=+b.dataset.v;persist();render();break;
+  case 'printbp':printBp();break;
+  case 'addmed':medForm();break;
+  case 'editmed':medForm(med);break;
+  case 'delmed':if(confirm('Οριστική διαγραφή του φαρμάκου και του ιστορικού του;\nΑν απλώς σταματήσατε να το παίρνετε, προτιμήστε «Διακοπή».')){D.meds=D.meds.filter(m=>m.id!==id);save();$('#dlg').close();render()}break;
+  case 'stopmed':stopForm(med);break;
+  case 'restartmed':med.active=true;med.end='';med.endReason='';med.start=dkey(new Date());addHist(med,'Επανέναρξη');save();render();toast('Το φάρμακο είναι ξανά ενεργό');break;
+  case 'histmed':histDlg(med);break;
+  case 'medview':D.settings.medview=b.dataset.v;persist();render();break;
+  case 'addtime':$('#times').insertAdjacentHTML('beforeend',timeRow(''));break;
+  case 'deltime':if(document.querySelectorAll('#times .row').length>1)b.parentElement.remove();else b.previousElementSibling.value='';break;
+  case 'prntoggle':$('#schedBox').style.display=b.checked?'none':'';break;
+  case 'alldays':$('#daysBox').style.display=b.checked?'none':'';break;
+  case 'take':markDose(b.dataset.k,'taken');break;
+  case 'skip':markDose(b.dataset.k,'skipped');break;
+  case 'undo':undoDose(b.dataset.k);break;
+  case 'prn':{const m=D.meds.find(x=>x.id===b.dataset.id);if(!m)break;const k=dkey(new Date())+'|'+m.id+'|prn|'+Date.now();markDose(k,'taken');break}
+  case 'profile':profileForm();break;
+  case 'addappt':apptForm();break;
+  case 'editappt':apptForm(D.appts.find(x=>x.id===id));break;
+  case 'delappt':if(confirm('Διαγραφή;')){D.appts=D.appts.filter(x=>x.id!==id);save();$('#dlg').close();render()}break;
+  case 'bigtext':D.settings.bigtext=!D.settings.bigtext;persist();render();break;
+  case 'sharecard':{const t=cardText();if(navigator.share){try{await navigator.share({title:'Κάρτα υγείας',text:t})}catch(e){}}else{await copy(t)}break}
+  case 'copycard':await copy(cardText());break;
+  case 'printcard':doPrint('<div class="hcard">'+$('#t-kar .hcard').innerHTML+'</div>');break;
+  case 'notifon':if('Notification' in window){const r=await Notification.requestPermission();toast(r==='granted'?'Οι ειδοποιήσεις ενεργοποιήθηκαν':'Οι ειδοποιήσεις δεν επιτράπηκαν');render()}break;
+  case 'testnotif':{const ok=await notif('💊 Δοκιμή','Έτσι θα φαίνονται οι υπενθυμίσεις.','test');beep();if(!ok)toast('Ενεργοποιήστε πρώτα τις ειδοποιήσεις');break}
+  case 'sound':D.settings.sound=b.checked;persist();break;
+  case 'ics':makeIcs();break;
+  case 'backup':{const r=await backupNow(true);toast(r==='folder'?'Το αντίγραφο αποθηκεύτηκε στον φάκελο':r==='download'?'Το αντίγραφο κατέβηκε ως αρχείο':'Δεν έγινε αντίγραφο');bkInfo();break}
+  case 'clearfolder':await delRoot().catch(()=>{});toast('Ο φάκελος ξεχάστηκε· τα αρχεία δεν σβήστηκαν');bkInfo();break;
+  case 'restorelist':restoreList();break;
+  case 'restorefile':{const f=(window._rfiles||[])[+b.dataset.i];if(f){const file=await f.h.getFile();applyRestore(await file.text())}break}
+  case 'restorepick':$('#fileIn').click();break;
+  case 'install':if(installEvt){installEvt.prompt();installEvt=null;render()}break;
+  case 'wipe':if(confirm('Να σβηστούν ΟΛΑ τα δεδομένα από αυτή τη συσκευή;')&&confirm('Σίγουρα; Δεν αναιρείται (εκτός αν έχετε αντίγραφο).')){localStorage.removeItem(KEY);D=fix({});render();toast('Διαγράφηκαν')}break;
+ }
+});
+async function copy(t){try{await navigator.clipboard.writeText(t);toast('Αντιγράφηκε')}catch(e){const ta=document.createElement('textarea');ta.value=t;document.body.appendChild(ta);ta.select();document.execCommand('copy');ta.remove();toast('Αντιγράφηκε')}}
+$('#fileIn').addEventListener('change',async e=>{const f=e.target.files[0];if(f)applyRestore(await f.text());e.target.value=''});
+
+/* ---------- Εκκίνηση ---------- */
+function handleTake(tag){if(tag&&/^\d{4}-\d\d-\d\d\|/.test(tag)&&!D.doses[tag])markDose(tag,'taken')}
+if('serviceWorker' in navigator){
+ navigator.serviceWorker.register('sw.js').then(r=>{swReg=r}).catch(()=>{});
+ navigator.serviceWorker.ready.then(r=>swReg=r).catch(()=>{});
+ navigator.serviceWorker.addEventListener('message',e=>{if(e.data&&e.data.take)handleTake(e.data.take)});
+}
+const qp=new URLSearchParams(location.search);
+if(qp.get('take')){handleTake(qp.get('take'));history.replaceState(null,'',location.pathname)}
+render();
+checkReminders();
+setInterval(checkReminders,30000);
+document.addEventListener('visibilitychange',()=>{if(!document.hidden){checkReminders();render()}});
+</script>
+</body>
+</html>
